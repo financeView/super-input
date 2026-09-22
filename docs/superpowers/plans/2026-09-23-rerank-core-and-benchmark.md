@@ -860,6 +860,7 @@ int main(int argc, char *argv[]) {
     traits.app_name = "super-input-baseline";
     traits.user_data_dir = argv[1];
     traits.shared_data_dir = argv[1];
+    traits.modules = NULL;          /* 防 RIME_STRUCT 未清零字段读到栈垃圾 */
     RimeSetup(&traits);
     RimeInitialize(&traits);
     RimeStartMaintenance(1);
@@ -1234,6 +1235,7 @@ def main() -> None:
     n = len(items)
     recall20 = base_first = l1_first = l2_tried = l2_ok = l2_correct = l2_blocked = 0
     validated_wrong = 0
+    t1_extra_ok = 0
     lat: list[float] = []
     l2_lat: list[float] = []
     details = []
@@ -1263,6 +1265,12 @@ def main() -> None:
                 text = decoder.decode(it["context"], segs or [])
                 l2_lat.append((time.perf_counter() - t2) * 1000)
                 v = validate(text, it["keys"], "T0", fc)
+                if not v.ok:
+                    # T1 对照量（spec §7 验收第 2 条：T1 有界编辑可控性）：
+                    # T0 拦下的输出里有多少是 T1 应放行的（虚词/儿化类插入）
+                    v1 = validate(text, it["keys"], "T1", fc)
+                    if v1.ok:
+                        t1_extra_ok += 1
                 if v.ok:
                     l2_ok += 1
                     if normalize_text(text) == exp:
@@ -1288,7 +1296,7 @@ def main() -> None:
 - **召回上限（正确答案在 top-20 内）**: {pct(recall20)}（L1 结构性天花板，spec §6.1）
 - **librime 基线首选正确率**: {pct(base_first)}
 - **L1 打分后首选正确率**: {pct(l1_first)}
-- L2 升级触发: {l2_tried} 条；过校验 {l2_ok}；被校验拦截 {l2_blocked}；过校验但错（幻觉代理指标）{validated_wrong}；L2 后正确 {l2_correct}
+- L2 升级触发: {l2_tried} 条；过校验 {l2_ok}；被校验拦截 {l2_blocked}（其中 T1 可放行 {t1_extra_ok}——T1 开关的增量收益，spec §7）；过校验但错（幻觉代理指标）{validated_wrong}；L2 后正确 {l2_correct}
 - L1 延迟: p50={pctl(lat, .5):.0f}ms p95={pctl(lat, .95):.0f}ms（目标 p95<800ms，硬限 1500ms）
 - L2 延迟: p50={pctl(l2_lat, .5):.0f}ms p95={pctl(l2_lat, .95):.0f}ms（目标 p95<2s）— {len(l2_lat)} 条
 - KV 前缀缓存实测: {kv}
@@ -1836,7 +1844,10 @@ class TimeoutWindow:
                             text = ""
             except Exception:  # noqa: BLE001
                 text = ""                  # 单一出口：任何失败回退 L1（spec §4.3）
-            app.state.policy.record(req.session_id, timed_out or not text)
+            # 只记录真超时（spec §5 触发器=超时率）：云失败回退本地/本地解码失败
+            # 不计超时——否则云故障期会误积累记录、触发「降级到云」死循环。
+            # 注意：降级到云后无回升回路（spec §5「本会话降云」是有意设计）。
+            app.state.policy.record(req.session_id, timed_out)
             if text:
                 from .validator import validate
                 if validate(text, req.keys, req.trust, app.state.fuzzy).ok:
