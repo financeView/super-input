@@ -82,6 +82,9 @@ third_party/
 __pycache__/
 *.egg-info/
 benchmark/datasets/baseline.json
+baseline/data/luna_pinyin.dict.yaml
+benchmark/latency.csv
+GIEOF
 GIEOF
 ```
 
