@@ -66,9 +66,23 @@ super-input/
 
 ```bash
 cd /Users/lijianhua04/Documents/IdeaProject/super-input
+# Python 版本预检（reviewer：str | None 注解在 ≤3.10 上 import 即 TypeError）
+PY3=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+if [ "$(printf '%s\n3.11' "$PY3" | sort -V | head -1)" != "3.11" ]; then
+  echo "需要 Python ≥3.11，当前 $PY3。brew install python@3.11 后用 python3.11 重试"
+  exit 1
+fi
 python3 -m venv .venv
 mkdir -p src/rerank tests benchmark/datasets baseline/data deploy assets scripts
 touch src/rerank/__init__.py
+# 仓库卫生（reviewer：防 4MB 词典/venv/编译产物进 git）
+cat > .gitignore <<'GIEOF'
+.venv/
+third_party/
+__pycache__/
+*.egg-info/
+benchmark/datasets/baseline.json
+GIEOF
 ```
 
 `pyproject.toml`：
@@ -83,6 +97,10 @@ dependencies = ["pypinyin>=0.51", "PyYAML>=6", "fastapi>=0.110", "uvicorn>=0.29"
 [project.optional-dependencies]
 dev = ["pytest>=8", "httpx>=0.27"]
 ml = ["mlx-lm>=0.19"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
@@ -131,22 +149,27 @@ ga gai gan gang gao ge gei gen geng gong gou gu gua guo guai guan guang gun
 ha hai han hang hao he hei hen heng hong hou hu hua huo huai huan huang hun
 ji jia jie jiao jiu jian jin jiang jing ju jue juan jun
 ka kai kan kang kao ke ken keng kong kou ku kua kuo kuai kuan kuang kun
-la lai lan lang lao le lei lou leng li lie liao liu lian lin liang ling lu luo luan lun lü
+la lai lan lang lao le lei lou leng li lie liao liu lian lin liang ling lu luo luan lun lü lüe
 ma mai man mang mao me mei men mi mie miao miu mian min ming mo mou mu
-na nai nan nang nao ne nei nen ni nie niao niu nian nin niang ning nu nuo nuan nun nü
+na nai nan nang nao ne nei nen ni nie niao niu nian nin niang ning nu nuo nuan nun nü nüe
 o ou
 pa pai pan pang pao pei pen peng pi pie piao pian pin ping po pou pu
 qi qia qie qiao qiu qian qin qiang qing qu que quan qun
-ran rang rao re ren reng ri rong rou ru rua rui ruan run
+ran rang rao re ren reng ri rong rou ru rua rui ruan run ruo
 sa sai san sang sao se sen seng sha shai shan shang shao she shei shen sheng
 shi shou shu shua shuo shuai shuan shun song sou su suo sui suan sun
-ta tai tan tang tao te ti tie tiao tian ting tu tuo tui tuan tun tong
+ta tai tan tang tao te teng ti tie tiao tian ting tu tuo tui tuan tun tong
 wa wai wan wang wei wen weng wo wu
 xi xia xie xiao xiu xian xin xiang xing xu xue xuan xun
-ya yan yao ye yi yin you ying yong yu yue yuan yun yo
+ya yan yang yao ye yi yin you ying yong you yu yue yuan yun yo
+chui zhui shui dun gui kui hui xiong jiong
 za ze zi zai zei zao zou zan zen zang zeng zu zuo zui zuan zun
 zha zhe zhi zhai zhao zhou zhan zhen zhang zheng zhong zhu zhua zhuo zhuai zhuan zhun
+nuan nun teng ruo lüe nüe yong
 """
+# 注：上面末三行是把首轮遗漏的音节补齐（yang/tou/hui/gui/shui/dun/xiong/jiong/
+# lüe/nüe/ruo/teng/chui/zhui/kui——reviewer 实测发现「好像 haoxiang」都会切分失败）。
+# 实施时建议对照标准 410 音节全表逐项校验一次（Task 1 Step 5 之外加人工比对）。
 SYLLABLES = frozenset(_RAW.split())
 
 def norm(s: str) -> str:
@@ -241,8 +264,11 @@ Expected: FAIL（`No module named 'rerank.fuzzy'`）
 ```python
 """从 rime schema 的 speller/algebra derive 规则推导音节等价类（并查集）。
 
-只支持 derive/<regex>/<repl>/ 形式；derive 结果不在 SYLLABLES 内的自动丢弃
-（前后鼻音/平翘舌的成对形态均为合法音节，天然满足）。"""
+只支持 derive/<regex>/<repl>/ 形式；derive 结果不在 SYLLABLES 内的自动丢弃。
+等价类语义（reviewer 发现的闭包歧义，此处钉死）：**规则对内等价**而非
+传递闭包——an↔ang 是一类、en↔eng 是一类，但 zhan(=zha+an) 不会因此
+与 zang(=za+ang) 连通。实现：每条 derive 规则生成 (原音节, 派生音节) 对，
+**按规则号分组**做并查集（不同规则不合并根）——class id = 规则组内根。"""
 import re
 import yaml
 
@@ -250,13 +276,37 @@ from .syllables import SYLLABLES
 
 
 class FuzzyClasses:
-    def __init__(self, pairs: list[tuple[str, str]]):
-        self._parent: dict[str, str] = {}
-        for a, b in pairs:
-            self._ensure(a)
-            self._ensure(b)
-            self._union(a, b)
-        self.pair_count = len(set(pairs))
+    def __init__(self, rule_groups: list[list[tuple[str, str]]]):
+        # 每组独立并查集（组间不闭包）
+        self._groups: list[dict[str, str]] = [dict() for _ in rule_groups]
+        for gi, pairs in enumerate(rule_groups):
+            parent = self._groups[gi]
+            for a, b in pairs:
+                parent.setdefault(a, a)
+                parent.setdefault(b, b)
+                self._union_in(parent, a, b)
+        self.pair_count = sum(len({p for p in g}) for g in rule_groups)
+
+    def _union_in(self, parent: dict[str, str], a: str, b: str) -> None:
+        ra, rb = self._find_in(parent, a), self._find_in(parent, b)
+        if ra != rb:
+            parent[ra] = rb
+
+    def _find_in(self, parent: dict[str, str], s: str) -> str:
+        parent.setdefault(s, s)
+        root = s
+        while parent[root] != root:
+            root = parent[root]
+        while parent[s] != root:
+            parent[s], s = root, parent[s]
+        return root
+
+    def cls(self, s: str) -> int:
+        # 类标识 = (组号, 组内根) 的哈希；不在任何组 → (−1, 自身)
+        for gi, parent in enumerate(self._groups):
+            if s in parent:
+                return hash((gi, self._find_in(parent, s)))
+        return hash((-1, s))
 
     def _ensure(self, s: str) -> None:
         self._parent.setdefault(s, s)
@@ -283,7 +333,7 @@ def load_fuzzy_classes(schema_path: str) -> FuzzyClasses:
     with open(schema_path, encoding="utf-8") as f:
         doc = yaml.safe_load(f)
     rules = doc["speller"]["algebra"]
-    pairs: set[tuple[str, str]] = set()
+    rule_groups: list[list[tuple[str, str]]] = []
     for rule in rules:
         rule = rule.strip()
         if not rule.startswith("derive/"):
@@ -293,11 +343,14 @@ def load_fuzzy_classes(schema_path: str) -> FuzzyClasses:
             continue
         pattern, repl = spec.split("/", 1)
         rx = re.compile(pattern)
+        pairs: set[tuple[str, str]] = set()
         for s in SYLLABLES:
             t = rx.sub(repl, s)
             if t != s and t in SYLLABLES:
                 pairs.add((s, t))
-    return FuzzyClasses(sorted(pairs))
+        if pairs:
+            rule_groups.append(sorted(pairs))
+    return FuzzyClasses(rule_groups)
 ```
 
 - [ ] **Step 5: 跑测试确认通过**
@@ -540,7 +593,8 @@ def test_t1_insertion_of_function_word():
     assert v1.ok and v1.edits == 1
 
 def test_t1_deletion():
-    v = validate("完成任务", "wanchengrenwu", "T1", FC)     # 丢一个音节
+    # keys 含 5 个音节（wan-cheng-le-ren-wu），输出只有 4 字（了 无对应）→ 1 编辑
+    v = validate("完成了务", "wanchenglerenwu", "T1", FC)
     assert v.ok and v.edits == 1
 
 def test_t1_over_limit_rejected():
@@ -554,7 +608,8 @@ def test_digit_counts_as_insertion():
 
 def test_unsegmentable_keys():
     v = validate("任意", "fff", "T0", FC)
-    assert not v.ok and v.reason == "unsegmentable"
+    # f 非法节 → cover=0 → [[]]（长度0切分）→ 空音节表，任意文本 edits>limit → 拦截
+    assert not v.ok and v.reason == "limit"
 
 def test_normalize_text_and_compare():
     from rerank.validator import normalize_text
@@ -1271,6 +1326,8 @@ def main() -> None:
                     v1 = validate(text, it["keys"], "T1", fc)
                     if v1.ok:
                         t1_extra_ok += 1
+                    details.append({**it, "l2_text": text, "l2_ok": False})
+                    continue
                 if v.ok:
                     l2_ok += 1
                     if normalize_text(text) == exp:
@@ -1397,12 +1454,15 @@ from rerank.service import create_app, ensure_token
 
 @pytest.fixture()
 def client(tmp_path):
+    # create_app 已与 DEFAULTS 合并（无需全量键）；token_file 覆盖到 tmp 避免写真实家目录
     cfg = {"token_file": str(tmp_path / "token"), "min_syllables": 2,
            "l1_conf_threshold": 2.0, "timeout_ms": 1500,
-           "model": "unused", "port": 47625}
+           "model": "unused", "port": 47625,
+           "schema": "assets/superpinyin.schema.yaml"}
     app = create_app(cfg)
     app.state.scorer = _FakeScorer()
     app.state.decoder = _FakeDecoder()
+    app.state.ready = True        # 阻断 warmup 线程与注入的竞争
     return TestClient(app), ensure_token(cfg["token_file"])
 
 
@@ -1535,7 +1595,12 @@ class RerankRequest(BaseModel):
 
 
 def create_app(cfg: dict | None = None) -> FastAPI:
-    cfg = cfg or load_config()
+    # 部分配置必须与 DEFAULTS 合并（reviewer B3）：测试传 partial cfg 时
+    # cfg["schema"]/["context_window"] 等 KeyError
+    base = load_config()
+    if cfg:
+        base.update(cfg)
+    cfg = base
     app = FastAPI()
     app.state.cfg = cfg
     app.state.ready = False
@@ -1552,13 +1617,14 @@ def create_app(cfg: dict | None = None) -> FastAPI:
             raise HTTPException(400, "protocol version mismatch")
 
     @app.get("/health")
-    def health(authorization: str = Header(""), protocol: str = Header("")):
+    def health(authorization: str = Header(""),
+               protocol: str = Header("", alias="X-SuperInput-Protocol")):
         _auth(authorization, protocol)
         return {"ready": app.state.ready}
 
     @app.post("/rerank")
     def rerank(req: RerankRequest, authorization: str = Header(""),
-               protocol: str = Header("")) -> dict:
+               protocol: str = Header("", alias="X-SuperInput-Protocol")) -> dict:
         _auth(authorization, protocol)
         from .segment import segment_keys
         segs, _frag = segment_keys(req.keys)
@@ -1595,7 +1661,11 @@ def create_app(cfg: dict | None = None) -> FastAPI:
     return app
 
 
-app = create_app()
+def _create_prod_app() -> FastAPI:
+    """uvicorn 入口（launchd 用）：--factory rerank.service:_create_prod_app。
+    测试路径直接调 create_app(cfg)，不走本函数——模块级无副作用
+    （reviewer：import 即写 token + 起 warmup 会污染测试与开发机）。"""
+    return create_app(load_config())
 ```
 
 - [ ] **Step 5: 跑测试确认通过** → 4 passed
@@ -1892,7 +1962,7 @@ git commit -m "feat(rerank): timeout sliding-window downgrade policy wired into 
     <string>/Users/lijianhua04/Documents/IdeaProject/super-input/.venv/bin/uvicorn</string>
     <string>--host</string><string>127.0.0.1</string>
     <string>--port</string><string>47625</string>
-    <string>rerank.service:app</string>
+    <string>--factory</string><string>rerank.service:_create_prod_app</string>
   </array>
   <key>WorkingDirectory</key>
     <string>/Users/lijianhua04/Documents/IdeaProject/super-input</string>
