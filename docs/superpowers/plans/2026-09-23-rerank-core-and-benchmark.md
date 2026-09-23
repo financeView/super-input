@@ -15,6 +15,7 @@
 - 校验规则（spec §4.4）：音节层比对（模糊等价类内相等）、不校声调、多音字任一读音即过；T1 额外允许 ≤2 字无音节插入/删除
 - IPC：HTTP 127.0.0.1:47625、头 `X-SuperInput-Protocol: 1`、Bearer token 于 `~/Library/Application Support/super-input/token`（0600）
 - 触发门槛 ≥2 完整音节；L1 只走本地 logprob（云无 logprob，云仅 L2）
+- L1 打分口径 = **平均 logprob**（长度归一，防短候选偏置）；sum 口径仅基准对照；阈值（`l1_conf_threshold`/`CONF_THRESHOLD`=0.5）按 mean 口径定标
 - 延迟：L1 P95 <800ms / 硬限 1500ms；L2 P95 <2s；目标硬件 16GB+ M 系列
 - 基线必须与打分跑同一 schema（否则 +15pt 不可归因，spec §6.1）
 - 每 Task 一次 commit；conventional commits
@@ -85,7 +86,6 @@ benchmark/datasets/baseline.json
 baseline/data/luna_pinyin.dict.yaml
 benchmark/latency.csv
 GIEOF
-GIEOF
 ```
 
 `pyproject.toml`：
@@ -99,7 +99,7 @@ dependencies = ["pypinyin>=0.51", "PyYAML>=6", "fastapi>=0.110", "uvicorn>=0.29"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "httpx>=0.27"]
-ml = ["mlx-lm>=0.19"]
+ml = ["mlx-lm>=0.31,<0.32"]   # 0.19 的 utils.generate 导入在 0.31 已迁包级；基准可复现性需上界（B3 实测 0.31.3）
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -116,7 +116,10 @@ markers = ["integration: needs librime tool or MLX model"]
 from rerank.syllables import SYLLABLES, norm
 
 def test_valid_syllables():
-    for s in ["feng", "fen", "zhuang", "chuang", "lü", "nü", "er", "sheng", "jin", "xuan", "seng", "rua"]:
+    # 第四轮 reviewer 实测曾缺的高频音节全部入列（B1 回归锚点）
+    for s in ["feng", "fen", "zhuang", "chuang", "lü", "nü", "er", "sheng", "jin", "xuan", "seng", "rua",
+              "fan", "fang", "si", "tou", "zong", "long", "nong", "shuang", "qiong",
+              "e", "en", "ei", "lo", "lia", "xiong", "jiong", "chui", "zhui", "shui", "dun", "gui", "kui", "hui"]:
         assert s in SYLLABLES, s
 
 def test_invalid_syllables():
@@ -142,37 +145,51 @@ import re
 
 _RAW = """
 a ai an ang ao
-ba bai ban bang bao bei ben beng bi bian biao bie bin bing bo bu
-ca cai can cang cao ce cen ceng cha chai chan chang chao che chen cheng
-chi chong chou chu chua chuai chuan chuang chun chuo ci cong cou cu cuan cui cun cuo
-da dai dan dang dao de dei dia die diao diu dian ding dou du duo dui duan dong
-er
-fa fei fen feng fo fou fu
-ga gai gan gang gao ge gei gen geng gong gou gu gua guo guai guan guang gun
-ha hai han hang hao he hei hen heng hong hou hu hua huo huai huan huang hun
-ji jia jie jiao jiu jian jin jiang jing ju jue juan jun
-ka kai kan kang kao ke ken keng kong kou ku kua kuo kuai kuan kuang kun
-la lai lan lang lao le lei lou leng li lie liao liu lian lin liang ling lu luo luan lun lü lüe
-ma mai man mang mao me mei men mi mie miao miu mian min ming mo mou mu
-na nai nan nang nao ne nei nen ni nie niao niu nian nin niang ning nu nuo nuan nun nü nüe
+ba bai ban bang bao bei ben beng bi bian biang biao bie bin bing bo bu
+ca cai can cang cao ce cei cen ceng cha chai chan chang chao che chen cheng
+chi chong chou chu chua chuai chuan chuang chui chun chuo ci cong cou cu
+cuan cui cun cuo
+da dai dan dang dao de dei den deng di dia dian diao die din ding diu dong
+dou du duan dui dun duo
+e eh ei en eng er
+fa fan fang fei fen feng fiao fo fong fou fu
+ga gai gan gang gao ge gei gen geng gong gou gu gua guai guan guang gui gun
+guo
+ha hai han hang hao he hei hen heng hong hou hu hua huai huan huang hui hun
+huo
+ji jia jian jiang jiao jie jin jing jiong jiu ju juan jue jun
+ka kai kan kang kao ke kei ken keng kong kou ku kua kuai kuan kuang kui kun
+kuo
+la lai lan lang lao le lei leng li lia lian liang liao lie lin ling liu lo
+long lou lu luan lun luo lü lüan lüe
+ma mai man mang mao me mei men meng mi mian miao mie min ming miu mo mou mu
+na nai nan nang nao ne nei nen neng ni nia nian niang niao nie nin ning niu
+nong nou nu nuan nun nuo nü nüe
 o ou
-pa pai pan pang pao pei pen peng pi pie piao pian pin ping po pou pu
-qi qia qie qiao qiu qian qin qiang qing qu que quan qun
-ran rang rao re ren reng ri rong rou ru rua rui ruan run ruo
-sa sai san sang sao se sen seng sha shai shan shang shao she shei shen sheng
-shi shou shu shua shuo shuai shuan shun song sou su suo sui suan sun
-ta tai tan tang tao te teng ti tie tiao tian ting tu tuo tui tuan tun tong
-wa wai wan wang wei wen weng wo wu
-xi xia xie xiao xiu xian xin xiang xing xu xue xuan xun
-ya yan yang yao ye yi yin you ying yong you yu yue yuan yun yo
-chui zhui shui dun gui kui hui xiong jiong
-za ze zi zai zei zao zou zan zen zang zeng zu zuo zui zuan zun
-zha zhe zhi zhai zhao zhou zhan zhen zhang zheng zhong zhu zhua zhuo zhuai zhuan zhun
-nuan nun teng ruo lüe nüe yong
+pa pai pan pang pao pei pen peng pi pia pian piao pie pin ping po pou pu
+qi qia qian qiang qiao qie qin qing qiong qiu qu quan que qun
+ran rang rao re ren reng ri rong rou ru rua ruan rui run ruo
+sa sai san sang sao se sei sen seng sha shai shan shang shao she shei shen
+sheng shi shou shu shua shuai shuan shuang shui shun shuo si song sou su
+suan sui sun suo
+ta tai tan tang tao te tei teng ti tian tiao tie ting tong tou tu tuan tui
+tun tuo
+wa wai wan wang wei wen weng wo wong wu
+xi xia xian xiang xiao xie xin xing xiong xiu xu xuan xue xun
+ya yai yan yang yao ye yi yin ying yo yong you yu yuan yue yun
+za zai zan zang zao ze zei zen zeng zha zhai zhan zhang zhao zhe zhei zhen
+zheng zhi zhong zhou zhu zhua zhuai zhuan zhuang zhui zhun zhuo zi zong zou
+zu zuan zui zun zuo
 """
-# 注：上面末三行是把首轮遗漏的音节补齐（yang/tou/hui/gui/shui/dun/xiong/jiong/
-# lüe/nüe/ruo/teng/chui/zhui/kui——reviewer 实测发现「好像 haoxiang」都会切分失败）。
-# 实施时建议对照标准 410 音节全表逐项校验一次（Task 1 Step 5 之外加人工比对）。
+# 出处（B1 教训后钉死）：本表从 luna_pinyin 词典音节列机器提取（2026-09-24），
+#   git clone --depth 1 rime/rime-luna-pinyin → 词典第 2 列按空白拆分 → norm(v→ü) → 424 项。
+# 与 librime 基线完全同构：基线能解的键序本表都能切，杜绝「Python 切分失败而基线
+# 正常」的指标不对称。含少量方言/语气/词典伪影音节（dia 嗲、fiao 覅、biang、
+# nun=嫩、lüan、zhei 这），对校验层无害，保留以换对齐。
+# 交叉验证已做：luna 全部 20,902 个唯一汉字经 pypinyin 读音与本表求交，仅 8 个
+# 非标准字（兙/瓧/嗯 等）无交集——验证失败自动回退 L1，可接受。
+# 历史教训：手抄「标准 410 表」曾漏 fan/fang/si/tou/zong/zhuang/long/nong/shuang/
+# qiong/e/en/ei/lo/lia 共 15 个音节，挂掉自家测试并污染 5% 数据集——勿再手工删补。
 SYLLABLES = frozenset(_RAW.split())
 
 def norm(s: str) -> str:
@@ -200,7 +217,7 @@ git commit -m "feat(rerank): scaffold + pinyin syllable table"
 
 **Interfaces:**
 - Consumes: `SYLLABLES`
-- Produces: `load_fuzzy_classes(schema_path: str) -> FuzzyClasses`；`FuzzyClasses.cls(s: str) -> int`（未知音节自成一类）；`FuzzyClasses.pair_count -> int`
+- Produces: `load_fuzzy_classes(schema_path: str) -> FuzzyClasses`；`FuzzyClasses.match(a: str, b: str) -> bool`（某一规则组内同根即等价；单音节可属多组、须全组判定；不做跨规则闭包——librime 单步派生同构，zhan 不匹配 zang）；`FuzzyClasses.pair_count -> int`
 
 - [ ] **Step 1: 写 schema `assets/superpinyin.schema.yaml`**（基线与服务共用——单一事实源）
 
@@ -242,19 +259,25 @@ from rerank.fuzzy import load_fuzzy_classes
 FC = load_fuzzy_classes("assets/superpinyin.schema.yaml")
 
 def test_front_back_nasal_same_class():
-    assert FC.cls("fen") == FC.cls("feng")
-    assert FC.cls("jin") == FC.cls("jing")
-    assert FC.cls("chen") == FC.cls("cheng")
+    assert FC.match("fen", "feng")
+    assert FC.match("jin", "jing")
+    assert FC.match("chen", "cheng")   # chen 属平翘舌+前后鼻音双组，多组语义必须保留（B5b）
 
 def test_retroflex_same_class():
-    assert FC.cls("za") == FC.cls("zha")
-    assert FC.cls("si") == FC.cls("shi")
+    assert FC.match("za", "zha")
+    assert FC.match("si", "shi")
+
+def test_no_cross_rule_closure():
+    # librime 单步派生语义：zhan 可经单规则派生匹配 zan（zh→z）与 zhang（an→ang），
+    # 但不得匹配 zang（跨规则复合 = 过矫正）
+    assert FC.match("zhan", "zan") and FC.match("zhan", "zhang")
+    assert not FC.match("zhan", "zang")
 
 def test_unrelated_differ():
-    assert FC.cls("hao") != FC.cls("fen")
+    assert not FC.match("hao", "fen")
 
-def test_unknown_syllable_self_class():
-    assert FC.cls("hao") == FC.cls("hao")  # same unknown -> same id
+def test_unknown_syllable_self_match():
+    assert FC.match("hao", "hao")  # 未知音节与自身匹配
 ```
 
 - [ ] **Step 3: 跑测试确认失败**
@@ -304,32 +327,25 @@ class FuzzyClasses:
             parent[s], s = root, parent[s]
         return root
 
-    def cls(self, s: str) -> int:
-        # 类标识 = (组号, 组内根) 的哈希；不在任何组 → (−1, 自身)
+    def _roots(self, s: str) -> list[tuple[int, str]]:
+        """s 在各规则组内的 (组号, 组内根)；不在任何组 → [(-1, 自身)]。"""
+        out = []
         for gi, parent in enumerate(self._groups):
             if s in parent:
-                return hash((gi, self._find_in(parent, s)))
-        return hash((-1, s))
+                out.append((gi, self._find_in(parent, s)))
+        return out or [(-1, s)]
 
-    def _ensure(self, s: str) -> None:
-        self._parent.setdefault(s, s)
-
-    def _find(self, s: str) -> str:
-        self._ensure(s)
-        root = s
-        while self._parent[root] != root:
-            root = self._parent[root]
-        while self._parent[s] != root:  # 路径压缩
-            self._parent[s], s = root, self._parent[s]
-        return root
-
-    def _union(self, a: str, b: str) -> None:
-        ra, rb = self._find(a), self._find(b)
-        if ra != rb:
-            self._parent[ra] = rb
-
-    def cls(self, s: str) -> int:
-        return hash(self._find(s))
+    def match(self, a: str, b: str) -> bool:
+        # a/b 等价 ⟺ **某一**规则组内同根。单音节可属多组（chen 既在平翘
+        # 舌组 chen↔cen、又在前后鼻音组 chen↔cheng），「首组命中即返回」会
+        # 丢掉其余组的等价（B5b，可执行验证发现）。也不做跨规则闭包——与
+        # librime derive 的单步派生同构：zhan 匹配 zan/zhang，但不匹配 zang
+        # （跨规则复合 = 过矫正，reviewer 钉死的语义）。
+        ra, rb = self._roots(a), self._roots(b)
+        return any(x == y for x in ra for y in rb)
+    # （B2 回归注记：旧版 _ensure/_find/_union/cls 曾残留在本类尾部，Python
+    #   后定义覆盖前定义 → 实际生效旧版且引用已删除的 self._parent → 必炸。
+    #   修复时已删净。）
 
 
 def load_fuzzy_classes(schema_path: str) -> FuzzyClasses:
@@ -345,6 +361,10 @@ def load_fuzzy_classes(schema_path: str) -> FuzzyClasses:
         if spec.count("/") < 1:
             continue
         pattern, repl = spec.split("/", 1)
+        # rime 代换语法是 $1（Ruby 风格），Python re.sub 的反向引用是 \1——
+        # 不转换则派生形如字面 '$1a'，永不命中音节表，全部等价类为空、
+        # 模糊匹配整条失效（B5，前三轮静态审查均未发现，可执行验证抓出）
+        repl = re.sub(r"\$(\d)", r"\\\1", repl)
         rx = re.compile(pattern)
         pairs: set[tuple[str, str]] = set()
         for s in SYLLABLES:
@@ -359,7 +379,7 @@ def load_fuzzy_classes(schema_path: str) -> FuzzyClasses:
 - [ ] **Step 5: 跑测试确认通过**
 
 Run: `.venv/bin/pytest tests/test_fuzzy.py -v`
-Expected: 4 passed
+Expected: 5 passed
 
 - [ ] **Step 6: Commit**
 
@@ -404,6 +424,10 @@ def test_v_normalizes_to_umlaut():
     segs, frag = all_segmentations("lvdi")
     assert ["lü", "di"] in segs and frag == ""
 
+def test_erhua_form_segmented():
+    segs, frag = all_segmentations("nar")   # 儿化尾：na+r 一体（M7）
+    assert ["nar"] in segs and frag == ""
+
 def test_segment_keys_single():
     segs, frag = segment_keys("jintian")
     assert segs is not None and frag == ""
@@ -418,10 +442,16 @@ Run: `.venv/bin/pytest tests/test_segment.py -v` → FAIL（模块不存在）
 ```python
 """击键串 → 音节切分。dp 求最长可切前缀（完整音节前缀，spec §4.4），
 回溯枚举该前缀的全部切分（音节切分歧义如 xian=xi'an|xian 由校验器全试），
-尾部不可切残串返回给调用方留待下一轮停顿。"""
+尾部不可切残串返回给调用方留待下一轮停顿。
+儿化（M7）：允许「基音节+r」一体切分（nar/huar/zher…），validator 的儿化
+对齐分支（前字+儿 两字共耗一音节）才端到端可达——spec §4.4「输入 nar 一
+音节、输出哪儿两字」的显式要求。"""
 from .syllables import SYLLABLES, norm
 
-_MAX_SYLL = 6  # chuang/zhuang
+_MAX_SYLL = 7  # zhuang(6) + 儿化尾 r
+
+def _is_syl(s: str) -> bool:
+    return s in SYLLABLES or (s.endswith("r") and s[:-1] in SYLLABLES)
 
 def _reachable(keys: str) -> list[bool]:
     n = len(keys)
@@ -429,7 +459,7 @@ def _reachable(keys: str) -> list[bool]:
     dp[0] = True
     for i in range(1, n + 1):
         for j in range(max(0, i - _MAX_SYLL), i):
-            if dp[j] and keys[j:i] in SYLLABLES:
+            if dp[j] and _is_syl(keys[j:i]):
                 dp[i] = True
                 break
     return dp
@@ -449,7 +479,7 @@ def all_segmentations(keys: str, limit: int = 32):
             return
         for end in range(pos + 1, min(pos + _MAX_SYLL, cover) + 1):
             s = keys[pos:end]
-            if s in SYLLABLES:
+            if _is_syl(s):
                 acc.append(s)
                 bt(end, acc)
                 acc.pop()
@@ -464,7 +494,7 @@ def segment_keys(keys: str):
 
 - [ ] **Step 4: 跑测试确认通过**
 
-Run: `.venv/bin/pytest tests/test_segment.py -v` → 6 passed
+Run: `.venv/bin/pytest tests/test_segment.py -v` → 7 passed
 
 - [ ] **Step 5: Commit**
 
@@ -527,22 +557,17 @@ from .syllables import norm
 from .fuzzy import FuzzyClasses
 
 
-class _Identity(FuzzyClasses):
-    def __init__(self):  # type: ignore[no-untyped-def]
-        self._parent = {}
-        self.pair_count = 0
-
-
 @lru_cache(maxsize=65536)
 def char_readings(ch: str) -> list[str]:
     if not ("一" <= ch <= "鿿"):
         return []
-    out = pinyin(ch, style=Style.NORMAL, heteronym=True, errors=lambda x: [])[0]
-    return [norm(x) for x in out] or []
+    out = pinyin(ch, style=Style.NORMAL, heteronym=True, errors=lambda x: [])
+    first = out[0] if out else []   # 生僻字 errors 回调可能返回空表（m17）
+    return [norm(x) for x in first] or []
 
 
 def syllable_match(reading: str, typed: str, fuzzy: FuzzyClasses) -> bool:
-    return fuzzy.cls(reading) == fuzzy.cls(typed)
+    return fuzzy.match(reading, typed)
 ```
 
 - [ ] **Step 4: 跑测试确认通过** → 6 passed
@@ -588,6 +613,11 @@ def test_punctuation_stripped():
 def test_erhua_alignment():
     assert min_edit_align(["哪", "儿"], ["nar"], FC) == 0
     assert min_edit_align(["花", "儿"], ["huar"], FC) == 0
+
+def test_erhua_end_to_end():
+    # 端到端：切分出 nar → 儿化对齐分支可达（M7；spec §4.4 的显式要求）
+    v = validate("哪儿", "nar", "T0", FC)
+    assert v.ok and v.edits == 0
 
 def test_t1_insertion_of_function_word():
     v = validate("完成了任务", "wanchengrenwu", "T0", FC)   # 的 插入
@@ -708,7 +738,7 @@ def validate(text: str, keys: str, trust: str = "T0", fuzzy: FuzzyClasses | None
 
 - [ ] **Step 4: 跑测试确认通过**
 
-Run: `.venv/bin/pytest tests/test_validator.py -v` → 10 passed
+Run: `.venv/bin/pytest tests/test_validator.py -v` → 11 passed
 
 - [ ] **Step 5: Commit**
 
@@ -822,7 +852,7 @@ def _swap(reading: str, fc: FuzzyClasses) -> str | None:
     from .syllables import SYLLABLES
 
     for s in SYLLABLES:
-        if s != reading and fc.cls(s) == fc.cls(reading):
+        if s != reading and fc.match(s, reading):
             return s
     return None
 
@@ -926,6 +956,7 @@ int main(int argc, char *argv[]) {
 
     RimeSessionId sid = RimeCreateSession();
     char line[512];
+    int printed = 0;
     while (fgets(line, sizeof(line), stdin)) {
         size_t len = strlen(line);
         while (len && (line[len - 1] == '\n' || line[len - 1] == '\r')) line[--len] = 0;
@@ -937,6 +968,10 @@ int main(int argc, char *argv[]) {
         }
         RIME_STRUCT(RimeContext, ctx);
         if (RimeGetContext(sid, &ctx)) {
+            if (!printed) {  /* gate 第 5 项输入：page_size 实际生效值（m16） */
+                fprintf(stderr, "page_size=%d\n", ctx.menu.page_size);
+                printed = 1;
+            }
             for (int i = 0; i < ctx.menu.num_candidates; i++)
                 printf("%s\t%d\t%s\n", line, i, ctx.menu.candidates[i].text);
             RimeFreeContext(&ctx);
@@ -985,7 +1020,7 @@ Expected: 末行 `BUILD_OK`（首次约 5-10 分钟；需 Xcode CLT）
 echo "jintiantianqihenhao" | DYLD_LIBRARY_PATH=third_party/install/lib \
   ./baseline/dump_candidates baseline/data | head -5
 ```
-Expected: 至少一行 `jintiantianqihenhao<TAB>0<TAB>今天天气很好`（或近似整句；首行部署会编译词典，稍慢）
+Expected: 至少一行 `jintiantianqihenhao<TAB>0<TAB>今天天气很好`（或近似整句；首行部署会编译词典，稍慢）；stderr 首行 `page_size=20`——**记入 gate 第 5 项**（schema 的 menu/page_size 实际生效值）
 
 - [ ] **Step 5: 写 integration 测试 `tests/test_baseline.py`**
 
@@ -999,7 +1034,7 @@ import pytest
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TOOL = ROOT / "baseline" / "dump_candidates"
 
-pytestmark = pytest.mark.integration if not TOOL.exists() else pytest.mark.integration
+pytestmark = pytest.mark.integration   # 工具缺失时的跳过由各测试的 skipif 负责
 
 
 def _run(keys: str) -> list[str]:
@@ -1039,7 +1074,7 @@ git commit -m "feat(baseline): librime dump_candidates tool with shared fuzzy sc
 
 **Interfaces:**
 - Consumes: 无（纯新增）
-- Produces: `rank_from_scores(scores: list[float]) -> tuple[list[int], int, float]`（（重排索引序、最佳索引、置信度=best-second logprob 差））；`MLXScorer(model_id: str)`（`.score(prefix: str, candidate: str) -> float`、`.rank(prefix, candidates)`）；`probe_prefix_cache(model_id) -> bool | None`（KV 前缀缓存可用性实测，gate 输入之一）
+- Produces: `rank_from_scores(scores: list[float]) -> tuple[list[int], int, float]`（重排索引序、最佳索引、置信度=best-second 平均 logprob 差）；`MLXScorer(model_id: str)`（`.score(prefix, candidate) -> float` 平均 logprob、`.score_detail(prefix, candidate) -> tuple[总和, token数]`、`.rank(prefix, candidates)`）；`probe_prefix_cache(model_id) -> bool | None`（KV 前缀缓存可用性实测：预填前缀只喂后缀，测耗时差+数值一致，gate 输入之一）
 
 - [ ] **Step 1: 写失败测试 `tests/test_scorer.py`**
 
@@ -1068,9 +1103,12 @@ def test_import_does_not_load_mlx():
 
 ```python
 """L1 似然打分（spec §2/D1）：log P(候选|前文)，argmax 重排。
-纯 prefill 无解码；置信度 = best 与 second 的 logprob 差。
-注意：encode(prefix+candidate) 与 encode(prefix) 的 BPE 边界可能差一两个
-token（跨边界合并），对同为汉字候选的相对排序影响可忽略，基准阶段量化。"""
+纯 prefill 无解码；置信度 = best 与 second 的平均 logprob 差。
+口径（M9）：score 用**平均 logprob**（总和÷候选 token 数）——sum 口径在
+候选长度不等时系统性偏短候选，会污染 gate 第 1 项的 +15pt 判定；sum 留作
+基准对照（score_detail）。注意：encode(prefix+candidate) 与 encode(prefix)
+的 BPE 边界可能差一两个 token（跨边界合并），对同为汉字候选的相对排序
+影响可忽略，基准阶段量化。"""
 
 
 def rank_from_scores(scores: list[float]) -> tuple[list[int], int, float]:
@@ -1083,24 +1121,30 @@ def rank_from_scores(scores: list[float]) -> tuple[list[int], int, float]:
 class MLXScorer:
     def __init__(self, model_id: str):
         import mlx.core as mx
-        from mlx_lm.utils import load
+        from mlx_lm import load   # 包级导入（B3）：0.31 起 generate/make_prompt_cache 均已迁出 utils
 
         self._mx = mx
         self.model, self.tokenizer = load(model_id)
 
-    def score(self, prefix: str, candidate: str) -> float:
+    def score_detail(self, prefix: str, candidate: str) -> tuple[float, int]:
+        """(候选 logprob 总和, 候选 token 数)。"""
         mx = self._mx
         pre_ids = self.tokenizer.encode(prefix)
         full_ids = self.tokenizer.encode(prefix + candidate)
-        if len(full_ids) <= len(pre_ids):
-            return float("-inf")
+        n = len(full_ids) - len(pre_ids)
+        if n <= 0:
+            return float("-inf"), 0
         x = mx.array(full_ids)
         logits = self.model(x)
         logprobs = mx.log_softmax(logits.astype(mx.float32), axis=-1)
         s = 0.0
         for i in range(len(pre_ids), len(full_ids)):
             s += float(logprobs[i - 1, full_ids[i]])
-        return s
+        return s, n
+
+    def score(self, prefix: str, candidate: str) -> float:
+        s, n = self.score_detail(prefix, candidate)
+        return s / n if n > 0 else float("-inf")
 
     def rank(self, prefix: str, candidates: list[str]):
         scores = [self.score(prefix, c) for c in candidates]
@@ -1109,23 +1153,36 @@ class MLXScorer:
 
 
 def probe_prefix_cache(model_id: str) -> bool | None:
-    """实测 mlx-lm 跨请求前缀 KV 缓存（spec §9 存疑 1）。
-    True=复用明显加速；False=API 存在但无加速/异常；None=当前版本无 make_prompt_cache。"""
+    """实测 mlx-lm 跨请求 KV 前缀缓存（spec §9 存疑 1）。
+    方法复刻 server 的官方复用姿势（LRUPromptCache 的机制本质）：预填前缀进
+    cache，后续请求**只喂后缀**。判定两条件（M8——旧版喂同一串测不出任何
+    东西，恒 True/恒 False 皆可能）：①只算后缀的耗时远小于冷全量；②后缀
+    logits 与冷全量前向逐位一致（漂移 = cache 没真正续接前缀 KV，复用无效）。
+    True=可复用；False=API 存在但复用不成立/异常；None=当前版本无该 API。"""
     try:
         import time
 
         import mlx.core as mx
-        from mlx_lm.utils import load, make_prompt_cache
+        from mlx_lm import load
+        from mlx_lm.models.cache import make_prompt_cache
     except ImportError:
         return None
     try:
         model, tok = load(model_id)
-        ids = mx.array(tok.encode("今天天气很好。" * 40))
-        t0 = time.perf_counter(); model(ids); t1 = time.perf_counter()      # 冷前向
+        pre = tok.encode("今天天气很好。" * 40)
+        suf = tok.encode("明天天气预报晴朗。")
+        t0 = time.perf_counter()
+        cold = model(mx.array(pre + suf))          # 冷全量 prefill
+        t1 = time.perf_counter()
         cache = make_prompt_cache(model)
-        model(ids, cache=cache); t2 = time.perf_counter()                   # 填充缓存
-        model(ids, cache=cache); t3 = time.perf_counter()                   # 复用
-        return (t1 - t0) > (t3 - t2) * 1.5                                  # 复用快得多 → 可用
+        model(mx.array(pre), cache=cache)          # 预填前缀（一次性）
+        t2 = time.perf_counter()
+        warm = model(mx.array(suf), cache=cache)   # 只 prefill 后缀
+        t3 = time.perf_counter()
+        fast_enough = (t1 - t0) > (t3 - t2) * 1.5  # 复用生效 → 只算后缀
+        consistent = mx.allclose(cold[len(pre):].astype(mx.float32),
+                                 warm.astype(mx.float32), atol=1e-2)
+        return bool(fast_enough and consistent)
     except Exception:
         return False
 ```
@@ -1181,12 +1238,12 @@ def build_prompt(context: str, sylls: list[str]) -> str:
 
 class LocalDecoder:
     def __init__(self, model_id: str):
-        from mlx_lm.utils import load
+        from mlx_lm import load   # 包级导入（B3）：generate 已迁出 utils
 
         self.model, self.tokenizer = load(model_id)
 
     def decode(self, context: str, sylls: list[str]) -> str:
-        from mlx_lm.utils import generate
+        from mlx_lm import generate
 
         text = generate(self.model, self.tokenizer,
                         prompt=build_prompt(context, sylls),
@@ -1273,7 +1330,7 @@ from rerank.decode_l2 import LocalDecoder            # noqa: E402
 from rerank.validator import validate, normalize_text  # noqa: E402
 from rerank.scorer import probe_prefix_cache  # noqa: E402
 
-CONF_THRESHOLD = 2.0
+CONF_THRESHOLD = 0.5   # 平均 logprob 口径（M9）：mean 差是每 token 级差，2.0 的 sum 旧阈值会令 L2 永不触发
 
 
 def pctl(xs: list[float], q: float) -> float:
@@ -1291,11 +1348,12 @@ def main() -> None:
     decoder = LocalDecoder(model_id)
 
     n = len(items)
-    recall20 = base_first = l1_first = l2_tried = l2_ok = l2_correct = l2_blocked = 0
+    recall20 = base_first = l1_first = l1_first_sum = l2_tried = l2_ok = l2_correct = l2_blocked = 0
     validated_wrong = 0
     t1_extra_ok = 0
     lat: list[float] = []
     l2_lat: list[float] = []
+    confs: list[float] = []
     details = []
     for it in items:
         cands = base.get(it["keys"], [])
@@ -1309,11 +1367,20 @@ def main() -> None:
             details.append({**it, "note": "no-candidates"})
             continue
         t0 = time.perf_counter()
-        scores = [scorer.score(it["context"], c) for c in cands[:20]]
-        order, best, conf = rank_from_scores(scores)
+        sums: list[float] = []
+        means: list[float] = []
+        for c in cands[:20]:                       # 一次前向取双口径（M9）
+            s, ntok = scorer.score_detail(it["context"], c)
+            sums.append(s)
+            means.append(s / ntok if ntok > 0 else float("-inf"))
+        order, best, conf = rank_from_scores(means)
         lat.append((time.perf_counter() - t0) * 1000)
+        confs.append(conf)
         if norm(cands[best]) == exp:
             l1_first += 1
+        _, best_sum, _ = rank_from_scores(sums)     # sum 口径对照（长度偏置检测）
+        if norm(cands[best_sum]) == exp:
+            l1_first_sum += 1
         # 升级判定（spec §4.3）：best≠快速通道首选 且 置信度低 → L2
         if best != 0 and conf < CONF_THRESHOLD:
             l2_tried += 1
@@ -1324,6 +1391,7 @@ def main() -> None:
                 l2_lat.append((time.perf_counter() - t2) * 1000)
                 v = validate(text, it["keys"], "T0", fc)
                 if not v.ok:
+                    l2_blocked += 1                # 计数必须在 continue 前（B4）
                     # T1 对照量（spec §7 验收第 2 条：T1 有界编辑可控性）：
                     # T0 拦下的输出里有多少是 T1 应放行的（虚词/儿化类插入）
                     v1 = validate(text, it["keys"], "T1", fc)
@@ -1331,19 +1399,16 @@ def main() -> None:
                         t1_extra_ok += 1
                     details.append({**it, "l2_text": text, "l2_ok": False})
                     continue
-                if v.ok:
-                    l2_ok += 1
-                    if normalize_text(text) == exp:
-                        l2_correct += 1
-                    else:
-                        validated_wrong += 1
+                l2_ok += 1
+                if normalize_text(text) == exp:
+                    l2_correct += 1
                 else:
-                    l2_blocked += 1
+                    validated_wrong += 1
+                details.append({**it, "l2_text": text, "l2_ok": True})
             except Exception as e:  # noqa: BLE001
-                l2_blocked += 1
+                l2_blocked += 1                    # 解码异常也计入「未产出可用 L2」
                 details.append({**it, "note": f"l2-error:{e}"})
                 continue
-            details.append({**it, "l2_text": text, "l2_ok": True})
         else:
             details.append({**it, "l1_best": cands[best]})
 
@@ -1355,8 +1420,10 @@ def main() -> None:
 - 测试集: {n} 条（40 种子 × 5 模糊音强度）
 - **召回上限（正确答案在 top-20 内）**: {pct(recall20)}（L1 结构性天花板，spec §6.1）
 - **librime 基线首选正确率**: {pct(base_first)}
-- **L1 打分后首选正确率**: {pct(l1_first)}
-- L2 升级触发: {l2_tried} 条；过校验 {l2_ok}；被校验拦截 {l2_blocked}（其中 T1 可放行 {t1_extra_ok}——T1 开关的增量收益，spec §7）；过校验但错（幻觉代理指标）{validated_wrong}；L2 后正确 {l2_correct}
+- **L1 打分后首选正确率**（平均 logprob 主口径）: {pct(l1_first)}
+- L1 首选正确率（sum 口径对照，检测长度偏置）: {pct(l1_first_sum)}
+- L1 置信度分布: p50={pctl(confs, .5):.2f} p95={pctl(confs, .95):.2f}（升级阈值 {CONF_THRESHOLD} 的校准依据）
+- L2 升级触发: {l2_tried} 条；过校验 {l2_ok}；被校验拦截/失败 {l2_blocked}（其中 T1 可放行 {t1_extra_ok}——T1 开关的增量收益，spec §7）；过校验但错（幻觉代理指标）{validated_wrong}；L2 后正确 {l2_correct}
 - L1 延迟: p50={pctl(lat, .5):.0f}ms p95={pctl(lat, .95):.0f}ms（目标 p95<800ms，硬限 1500ms）
 - L2 延迟: p50={pctl(l2_lat, .5):.0f}ms p95={pctl(l2_lat, .95):.0f}ms（目标 p95<2s）— {len(l2_lat)} 条
 - KV 前缀缓存实测: {kv}
@@ -1459,20 +1526,25 @@ from rerank.service import create_app, ensure_token
 def client(tmp_path):
     # create_app 已与 DEFAULTS 合并（无需全量键）；token_file 覆盖到 tmp 避免写真实家目录
     cfg = {"token_file": str(tmp_path / "token"), "min_syllables": 2,
-           "l1_conf_threshold": 2.0, "timeout_ms": 1500,
+           "l1_conf_threshold": 0.5, "timeout_ms": 1500,
            "model": "unused", "port": 47625,
            "schema": "assets/superpinyin.schema.yaml"}
     app = create_app(cfg)
     app.state.scorer = _FakeScorer()
     app.state.decoder = _FakeDecoder()
-    app.state.ready = True        # 阻断 warmup 线程与注入的竞争
+    app.state.ready = True        # warmup 由 cfg 控制（默认 False，测试不起线程，M10）
     return TestClient(app), ensure_token(cfg["token_file"])
 
 
 class _FakeScorer:
+    def __init__(self, gap: float = 10.0):
+        self.gap = gap
+
     def rank(self, prefix, candidates):
-        # 模拟：把「风景很美」排第一（librime 首选是别的）
-        scores = [10.0 if "风景" in c else 0.0 for c in candidates]
+        # 严格相等才给高分：早期版本用 `"风景" in c` 给「风景很美」「风景很每」
+        # 同分 → conf=0 < 任何阈值 → 恒触发升级，test_l1_ranking 永远过不了
+        # （B6，可执行验证发现）
+        scores = [self.gap if c == "风景很美" else 0.0 for c in candidates]
         from rerank.scorer import rank_from_scores
         order, best, conf = rank_from_scores(scores)
         return order, best, conf, scores
@@ -1511,6 +1583,13 @@ def test_l1_ranking(client):
     j = r.json()
     assert j["mode"] == "L1" and "风景" in _cands()[j["best"]]
 
+def test_l2_upgrade_on_low_conf(client):
+    c, tok = client
+    c.app.state.scorer = _FakeScorer(gap=0.3)   # conf=0.3 < 0.5 → 升级判定（spec §4.3）
+    r = c.post("/rerank", json=_body("fenjinghenmei"), headers=_hdr(tok))
+    j = r.json()
+    assert j["mode"] == "L2" and j["l2_text"] == "风景很美"   # 过校验才可用（FakeDecoder 输出）
+
 
 def _body(keys="fenjinghenmei"):
     return {"session_id": "s1", "request_id": 1, "keys": keys, "preedit": "",
@@ -1538,10 +1617,11 @@ DEFAULTS = {
     "model": "mlx-community/Qwen2.5-1.5B-Instruct-4bit",
     "trust": "T0",
     "min_syllables": 2,
-    "l1_conf_threshold": 2.0,
+    "l1_conf_threshold": 0.5,   # 平均 logprob 口径（M9，与 run_bench CONF_THRESHOLD 一致）
     "timeout_ms": 1500,
     "context_window": 200,
     "debounce_ms": 500,
+    "warmup": False,           # 仅 prod 显式开启（M10）：create_app 见 cfg 才起线程
     "cloud": {"enabled": False, "base_url": "", "model": ""},
     "schema": "assets/superpinyin.schema.yaml",
 }
@@ -1604,6 +1684,10 @@ def create_app(cfg: dict | None = None) -> FastAPI:
     if cfg:
         base.update(cfg)
     cfg = base
+    # 测试可能传相对 schema 路径，update 会覆盖 load_config 的绝对化结果
+    # （m15）——合并后统一再绝对化一次
+    if not pathlib.Path(cfg["schema"]).is_absolute():
+        cfg["schema"] = str((pathlib.Path.cwd() / cfg["schema"]).resolve())
     app = FastAPI()
     app.state.cfg = cfg
     app.state.ready = False
@@ -1660,18 +1744,20 @@ def create_app(cfg: dict | None = None) -> FastAPI:
         app.state.scorer.score("预热前文。", "测试")
         app.state.ready = True
 
-    threading.Thread(target=_warmup, daemon=True).start()
+    if cfg.get("warmup"):    # 仅 prod 显式开启（M10）：测试默认不起 warmup 线程
+        threading.Thread(target=_warmup, daemon=True).start()
     return app
 
 
 def _create_prod_app() -> FastAPI:
     """uvicorn 入口（launchd 用）：--factory rerank.service:_create_prod_app。
-    测试路径直接调 create_app(cfg)，不走本函数——模块级无副作用
-    （reviewer：import 即写 token + 起 warmup 会污染测试与开发机）。"""
-    return create_app(load_config())
+    warmup 仅在此显式开启（M10）。测试路径直接调 create_app(cfg)：不起
+    warmup 线程、token_file 已覆写到 tmp——模块级零副作用（reviewer：
+    import/建 app 即写 token + 起 warmup 会污染测试与开发机）。"""
+    return create_app({**load_config(), "warmup": True})
 ```
 
-- [ ] **Step 5: 跑测试确认通过** → 4 passed
+- [ ] **Step 5: 跑测试确认通过** → 5 passed
 
 - [ ] **Step 6: Commit**
 
@@ -1839,10 +1925,17 @@ def test_two_does_not():
 
 
 def test_ttl_resets_window(monkeypatch):
+    # TTL 重置逻辑在 record 内：过窗后再 record，旧窗口应被清空。
+    # 若删掉 TTL 代码，本测试必须失败（m13 旧写法断言 1<3 恒真，测了个寂寞）
+    fake_now = [1000.0]
+    monkeypatch.setattr("rerank.policy.time.time", lambda: fake_now[0])
     w = TimeoutWindow(ttl_s=600)
-    w.record("s1", True)
-    monkeypatch.setattr("rerank.policy.time.time", lambda: w._now("s1") + 601)
-    assert w.should_downgrade("s1") is False
+    for _ in range(3):
+        w.record("s1", True)
+    assert w.should_downgrade("s1") is True      # 窗口内 3/3 → 触发
+    fake_now[0] += 601                           # 超过 TTL
+    w.record("s1", True)                         # 旧窗口清空，只留这 1 条
+    assert w.should_downgrade("s1") is False     # 1 < 3：TTL 重置生效
 ```
 
 - [ ] **Step 2: 跑测试确认失败** → FAIL
@@ -1887,8 +1980,13 @@ class TimeoutWindow:
 在 `create_app` 内 `app.state.cfg = cfg` 之后加：
 
 ```python
+    import concurrent.futures as cf
     from .policy import TimeoutWindow
     app.state.policy = TimeoutWindow()
+    # 单例 executor（M6）：绝不用 with 块——退出时 shutdown(wait=True) 会 join
+    # 正在跑 MLX 生成的线程，fut.result 超时后仍要等整段解码跑完，硬限形同虚设。
+    # 单例 + 放弃结果即返回；构造本身不spawn线程，测试路径零开销。
+    app.state.exec = cf.ThreadPoolExecutor(max_workers=1)
 ```
 
 在 `rerank` 端点 L2 分支（`if best != 0 and conf < ...`）把解码选择整体替换为：
@@ -1908,13 +2006,14 @@ class TimeoutWindow:
                     except CloudError:
                         text = ""          # 云失败回退本地（spec §5）
                 if not text:
-                    with cf.ThreadPoolExecutor(max_workers=1) as ex:
-                        fut = ex.submit(app.state.decoder.decode, context, segs)
-                        try:
-                            text = fut.result(timeout=cfg["timeout_ms"] / 1000)
-                        except cf.TimeoutError:
-                            timed_out = True
-                            text = ""
+                    # 单例 executor，不用 with 块（M6）：with 退出 join 生成线程
+                    # → 超时后仍阻塞至解码完成。这里超时即放弃结果返回，线程跑完自行丢弃
+                    fut = app.state.exec.submit(app.state.decoder.decode, context, segs)
+                    try:
+                        text = fut.result(timeout=cfg["timeout_ms"] / 1000)
+                    except cf.TimeoutError:
+                        timed_out = True
+                        text = ""
             except Exception:  # noqa: BLE001
                 text = ""                  # 单一出口：任何失败回退 L1（spec §4.3）
             # 只记录真超时（spec §5 触发器=超时率）：云失败回退本地/本地解码失败
@@ -1927,7 +2026,7 @@ class TimeoutWindow:
                     mode, l2_text = "L2", text
 ```
 
-（MLX 推理无法安全强杀，超时=放弃本次结果、线程自行结束——本地可接受）
+（MLX 推理无法安全强杀，超时=放弃本次结果、线程自行跑完。max_workers=1 的已知副作用：僵尸解码占住唯一 worker，后续 L2 请求排队→连锁超时→计入超时窗口→加速降级判定——与 spec §5「本会话降云」语义一致，可接受。）
 
 - [ ] **Step 6: 跑全部测试确认无回归**
 
@@ -1948,7 +2047,7 @@ git commit -m "feat(rerank): timeout sliding-window downgrade policy wired into 
 - Create: `deploy/com.superinput.rerank.plist`、`scripts/smoke.sh`
 
 **Interfaces:**
-- Consumes: `rerank.service:app`（uvicorn 入口）
+- Consumes: `rerank.service:_create_prod_app`（uvicorn `--factory` 入口，与 plist 参数一致；warmup 在此显式开启）
 - Produces: 常驻服务（launchd RunAtLoad + KeepAlive）；冒烟脚本（token→/health→/rerank 断言）
 
 - [ ] **Step 1: 写 `deploy/com.superinput.rerank.plist`**（`<ROOT>` 为仓库绝对路径占位，安装时替换）
@@ -2028,7 +2127,7 @@ git commit -m "feat(deploy): launchd plist + end-to-end smoke test"
 
 `benchmark/report.md`（Task 10 产出）必须回答五项，才进入 Plan 2（Squirrel fork 集成：选择键拦截/守卫元组/防抖/IPC 客户端/前文 commit 缓冲，对应 spec §4.3 全部 Squirrel 侧条款）：
 
-1. L1 相对基线提升是否 ≥ +15pt（对照召回上限解读）
+1. L1 相对基线提升是否 ≥ +15pt（对照召回上限解读；平均 logprob 主口径，sum 口径作长度偏置对照）
 2. L1 p95 是否 <800ms；不达标时沿 `latency.csv` 曲线选档
 3. KV 前缀缓存可用性（`probe_prefix_cache` 实测——不可用则 L1 保持全量 prefill，延迟预算按实测重估）
 4. L2 校验拦截率/幻觉率是否可接受
