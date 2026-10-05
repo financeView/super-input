@@ -95,5 +95,5 @@ def probe_prefix_cache(model_id: str) -> bool | None:
     warm_logits = model(mx.array(suffix_ids), cache=cache)
     mx.eval(warm_logits)
     warm_ms = time.perf_counter() - started
-    consistent = bool(mx.allclose(cold_logits[:, -len(suffix_ids):, :], warm_logits, atol=1e-2))
+    consistent = bool(mx.allclose(cold_logits[-len(suffix_ids):, :], warm_logits, atol=1e-2))
     return bool(cold_ms > warm_ms * 1.5 and consistent)
