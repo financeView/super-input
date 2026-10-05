@@ -9,6 +9,7 @@ __pycache__/
 htmlcov/
 third_party/
 baseline/dump_candidates
+baseline/data/superpinyin.schema.yaml
 baseline/data/luna_pinyin.dict.yaml
 benchmark/datasets/baseline.json
 benchmark/latency.csv
