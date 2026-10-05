@@ -1,2 +1,14 @@
 .supervisor/
 .DS_Store
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+third_party/
+baseline/dump_candidates
+baseline/data/luna_pinyin.dict.yaml
+benchmark/datasets/baseline.json
+benchmark/latency.csv
