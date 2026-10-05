@@ -81,7 +81,9 @@ def make_keys(sentence: str, swap_ratio: float, fuzzy: FuzzyClasses) -> str:
             continue  # punctuation/space is not part of the raw pinyin string
         _, reading, swapped = entry
         out.append(swapped if index in selected_positions and swapped else reading)
-    return "".join(out)
+    # The physical keyboard convention uses `v` for ü; keep dataset keys in
+    # that raw-key form so the librime C harness can feed ASCII key events.
+    return "".join(out).replace("ü", "v")
 
 
 def build_dataset(schema_path: str | Path | None = None) -> dict:
