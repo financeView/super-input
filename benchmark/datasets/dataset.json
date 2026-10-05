@@ -1,0 +1,1204 @@
+{
+  "items": [
+    {
+      "context": "周末的清晨很安静",
+      "keys": "kongqiliyouyidianliangyi",
+      "expected": "空气里有一点凉意",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "朋友约我去逛超市",
+      "keys": "womenfentoumaidongxi",
+      "expected": "我们分头买东西",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "登高望远的心情",
+      "keys": "fengjingmeiderangrenpingzhuhuxi",
+      "expected": "风景美得让人屏住呼吸",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "他是个很真诚的人",
+      "keys": "shuohuaconglaibuhanhu",
+      "expected": "说话从来不含糊",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "公司楼下的银行",
+      "keys": "meitianzaoshangdouyourenpaidui",
+      "expected": "每天早上都有人排队",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "这座城市的生活节奏",
+      "keys": "rangrenyouaiyouhen",
+      "expected": "让人又爱又恨",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "春天的森林里",
+      "keys": "niaojiaoshengciqibifu",
+      "expected": "鸟叫声此起彼伏",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "老人的心情很好",
+      "keys": "meitianjianchichenpaoduanlian",
+      "expected": "每天坚持晨跑锻炼",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "声音太大听不清",
+      "keys": "qingnizhongxinshuoyibian",
+      "expected": "请你重新说一遍",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "真正的朋友",
+      "keys": "buhuizainiluoposhichenmo",
+      "expected": "不会在你落魄时沉默",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "完成了今天的任务",
+      "keys": "wanshangkeyianxinxiuxi",
+      "expected": "晚上可以安心休息",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "深圳的春天很短",
+      "keys": "yizhuanyanjiuruxiale",
+      "expected": "一转眼就入夏了",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "银杏叶黄了",
+      "keys": "mandidoushijinsede",
+      "expected": "满地都是金色的",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "生产力工具",
+      "keys": "yonghaolenengshengyibanshijian",
+      "expected": "用好了能省一半时间",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "找到证据了吗",
+      "keys": "meiyouzhengjujiubunengxiajielun",
+      "expected": "没有证据就不能下结论",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "支持正版软件",
+      "keys": "zunzhongkaifazhedelaodong",
+      "expected": "尊重开发者的劳动",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "挑战自己的极限",
+      "keys": "renshengcaiyouyisi",
+      "expected": "人生才有意思",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "上传文件失败",
+      "keys": "qingjianchawangluolianjie",
+      "expected": "请检查网络连接",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "车站出口在哪边",
+      "keys": "wojideshizaidongbian",
+      "expected": "我记得是在东边",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "自然生长的果树",
+      "keys": "guoziweidaogenghao",
+      "expected": "果子味道更好",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "智慧城市治理",
+      "keys": "xuyaozhangqitouru",
+      "expected": "需要长期投入",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "人民银行总部",
+      "keys": "jiuzaizhetiaojieshang",
+      "expected": "就在这条街上",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "心情不好想吃火锅",
+      "keys": "yueshangpengyouyiqi",
+      "expected": "约上朋友一起",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "拼命工作不是办法",
+      "keys": "shenticaishibenqian",
+      "expected": "身体才是本钱",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "亲自体验过的人",
+      "keys": "caiyoufayanquan",
+      "expected": "才有发言权",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "沉默是金",
+      "keys": "dangaishuohuashiyaoshuo",
+      "expected": "但该说话时要说",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "晨雾散去之后",
+      "keys": "shanxiadechengshiqingxikejian",
+      "expected": "山下的城市清晰可见",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "成功没有秘诀",
+      "keys": "zhiyourifuyiridijianchi",
+      "expected": "只有日复一日地坚持",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "孩子的成长过程",
+      "keys": "xuyaofumuzugoudenaixin",
+      "expected": "需要父母足够的耐心",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "门前的花儿开了",
+      "keys": "hudiefeilaifeiqu",
+      "expected": "蝴蝶飞来飞去",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "站在城市的高处",
+      "keys": "kanwanjiadenghuo",
+      "expected": "看万家灯火",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "商务谈判进行得很顺利",
+      "keys": "shuangfangdouzuolerangbu",
+      "expected": "双方都做了让步",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "生产线出了故障",
+      "keys": "gongchengshilianyeqiangxiu",
+      "expected": "工程师连夜抢修",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "森林防火人人有责",
+      "keys": "yidianhuoxingdoubuxing",
+      "expected": "一点火星都不行",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "证据链条完整",
+      "keys": "anzikeyiyisongle",
+      "expected": "案子可以移送了",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "人生地不熟",
+      "keys": "wenwenlubiandelaoren",
+      "expected": "问问路边的老人",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "城市治理的智慧",
+      "keys": "cangzaixijieli",
+      "expected": "藏在细节里",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "声音识别技术",
+      "keys": "zhejinianjinbufeikuai",
+      "expected": "这几年进步飞快",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "认真的样子最帅",
+      "keys": "nigongzuodeshihouzhenhaokan",
+      "expected": "你工作的时候真好看",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "挣钱的速度",
+      "keys": "ganbushangfangjiadesudu",
+      "expected": "赶不上房价的速度",
+      "swap_ratio": 0.0
+    },
+    {
+      "context": "周末的清晨很安静",
+      "keys": "kongqiliyouyidianliangyi",
+      "expected": "空气里有一点凉意",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "朋友约我去逛超市",
+      "keys": "womenfentoumaidongxi",
+      "expected": "我们分头买东西",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "登高望远的心情",
+      "keys": "fenjinmeiderangrenpingzhuhuxi",
+      "expected": "风景美得让人屏住呼吸",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "他是个很真诚的人",
+      "keys": "suohuaconglaibuhanhu",
+      "expected": "说话从来不含糊",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "公司楼下的银行",
+      "keys": "meitianzhaoshangdouyourenpaidui",
+      "expected": "每天早上都有人排队",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "这座城市的生活节奏",
+      "keys": "ranrenyouaiyouhen",
+      "expected": "让人又爱又恨",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "春天的森林里",
+      "keys": "niaojiaoshengciqibifu",
+      "expected": "鸟叫声此起彼伏",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "老人的心情很好",
+      "keys": "meitianjiangchichenpaoduanlian",
+      "expected": "每天坚持晨跑锻炼",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "声音太大听不清",
+      "keys": "qinnizhongxinshuoyibian",
+      "expected": "请你重新说一遍",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "真正的朋友",
+      "keys": "buhuizhainiluoposhichenmo",
+      "expected": "不会在你落魄时沉默",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "完成了今天的任务",
+      "keys": "wangshangkeyianxinxiuxi",
+      "expected": "晚上可以安心休息",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "深圳的春天很短",
+      "keys": "yizhuanyanjiuruxiale",
+      "expected": "一转眼就入夏了",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "银杏叶黄了",
+      "keys": "mangdidoushijinsede",
+      "expected": "满地都是金色的",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "生产力工具",
+      "keys": "yonghaolenenshengyibanshijian",
+      "expected": "用好了能省一半时间",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "找到证据了吗",
+      "keys": "meiyouzhengjujiubunengxiajielun",
+      "expected": "没有证据就不能下结论",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "支持正版软件",
+      "keys": "zhunzhongkaifazhedelaodong",
+      "expected": "尊重开发者的劳动",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "挑战自己的极限",
+      "keys": "rengshengcaiyouyisi",
+      "expected": "人生才有意思",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "上传文件失败",
+      "keys": "qinjianchawangluolianjie",
+      "expected": "请检查网络连接",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "车站出口在哪边",
+      "keys": "wojidesizaidongbian",
+      "expected": "我记得是在东边",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "自然生长的果树",
+      "keys": "guoziweidaogenghao",
+      "expected": "果子味道更好",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "智慧城市治理",
+      "keys": "xuyaozhangqitouru",
+      "expected": "需要长期投入",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "人民银行总部",
+      "keys": "jiuzhaizhetiaojieshang",
+      "expected": "就在这条街上",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "心情不好想吃火锅",
+      "keys": "yueshangpengyouyiqi",
+      "expected": "约上朋友一起",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "拼命工作不是办法",
+      "keys": "senticaishibenqian",
+      "expected": "身体才是本钱",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "亲自体验过的人",
+      "keys": "caiyoufayanquan",
+      "expected": "才有发言权",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "沉默是金",
+      "keys": "danggaishuohuashiyaoshuo",
+      "expected": "但该说话时要说",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "晨雾散去之后",
+      "keys": "sanxiadechengshiqingxikejian",
+      "expected": "山下的城市清晰可见",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "成功没有秘诀",
+      "keys": "ziyourifuyiridijianchi",
+      "expected": "只有日复一日地坚持",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "孩子的成长过程",
+      "keys": "xuyaofumuzugoudenaixin",
+      "expected": "需要父母足够的耐心",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "门前的花儿开了",
+      "keys": "hudiefeilaifeiqu",
+      "expected": "蝴蝶飞来飞去",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "站在城市的高处",
+      "keys": "kangwanjiadenghuo",
+      "expected": "看万家灯火",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "商务谈判进行得很顺利",
+      "keys": "shuanfangdouzuolerangbu",
+      "expected": "双方都做了让步",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "生产线出了故障",
+      "keys": "gongcengshilianyeqiangxiu",
+      "expected": "工程师连夜抢修",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "森林防火人人有责",
+      "keys": "yidianhuoxingdoubuxing",
+      "expected": "一点火星都不行",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "证据链条完整",
+      "keys": "anzikeyiyisongle",
+      "expected": "案子可以移送了",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "人生地不熟",
+      "keys": "wengwenlubiandelaoren",
+      "expected": "问问路边的老人",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "城市治理的智慧",
+      "keys": "cangzaixijieli",
+      "expected": "藏在细节里",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "声音识别技术",
+      "keys": "zejinianjinbufeikuai",
+      "expected": "这几年进步飞快",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "认真的样子最帅",
+      "keys": "nigongzhuodeshihouzhenhaokan",
+      "expected": "你工作的时候真好看",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "挣钱的速度",
+      "keys": "gangbushangfangjiadesudu",
+      "expected": "赶不上房价的速度",
+      "swap_ratio": 0.25
+    },
+    {
+      "context": "周末的清晨很安静",
+      "keys": "kongqiliyouyidianliangyi",
+      "expected": "空气里有一点凉意",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "朋友约我去逛超市",
+      "keys": "womengfentoumaidongxi",
+      "expected": "我们分头买东西",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "登高望远的心情",
+      "keys": "fenjinmeideranrenpingzhuhuxi",
+      "expected": "风景美得让人屏住呼吸",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "他是个很真诚的人",
+      "keys": "suohuachonglaibuhanhu",
+      "expected": "说话从来不含糊",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "公司楼下的银行",
+      "keys": "meitianzhaosangdouyourenpaidui",
+      "expected": "每天早上都有人排队",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "这座城市的生活节奏",
+      "keys": "ranrengyouaiyouhen",
+      "expected": "让人又爱又恨",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "春天的森林里",
+      "keys": "niaojiaosengciqibifu",
+      "expected": "鸟叫声此起彼伏",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "老人的心情很好",
+      "keys": "meitianjiangcichenpaoduanlian",
+      "expected": "每天坚持晨跑锻炼",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "声音太大听不清",
+      "keys": "qinnizongxinshuoyibian",
+      "expected": "请你重新说一遍",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "真正的朋友",
+      "keys": "buhuizhainiluoposichenmo",
+      "expected": "不会在你落魄时沉默",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "完成了今天的任务",
+      "keys": "wangsangkeyianxinxiuxi",
+      "expected": "晚上可以安心休息",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "深圳的春天很短",
+      "keys": "yizhuangyanjiuruxiale",
+      "expected": "一转眼就入夏了",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "银杏叶黄了",
+      "keys": "mangdidousijinsede",
+      "expected": "满地都是金色的",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "生产力工具",
+      "keys": "yonghaolenensengyibanshijian",
+      "expected": "用好了能省一半时间",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "找到证据了吗",
+      "keys": "meiyouzengjujiubunengxiajielun",
+      "expected": "没有证据就不能下结论",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "支持正版软件",
+      "keys": "zhunzongkaifazhedelaodong",
+      "expected": "尊重开发者的劳动",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "挑战自己的极限",
+      "keys": "rengsengcaiyouyisi",
+      "expected": "人生才有意思",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "上传文件失败",
+      "keys": "qinjiangchawangluolianjie",
+      "expected": "请检查网络连接",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "车站出口在哪边",
+      "keys": "wojidesizhaidongbian",
+      "expected": "我记得是在东边",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "自然生长的果树",
+      "keys": "guozhiweidaogenghao",
+      "expected": "果子味道更好",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "智慧城市治理",
+      "keys": "xuyaozhangqitouru",
+      "expected": "需要长期投入",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "人民银行总部",
+      "keys": "jiuzhaizetiaojieshang",
+      "expected": "就在这条街上",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "心情不好想吃火锅",
+      "keys": "yuesangpengyouyiqi",
+      "expected": "约上朋友一起",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "拼命工作不是办法",
+      "keys": "sentichaishibenqian",
+      "expected": "身体才是本钱",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "亲自体验过的人",
+      "keys": "chaiyoufayanquan",
+      "expected": "才有发言权",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "沉默是金",
+      "keys": "danggaisuohuashiyaoshuo",
+      "expected": "但该说话时要说",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "晨雾散去之后",
+      "keys": "sanxiadecengshiqingxikejian",
+      "expected": "山下的城市清晰可见",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "成功没有秘诀",
+      "keys": "ziyourifuyiridijiangchi",
+      "expected": "只有日复一日地坚持",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "孩子的成长过程",
+      "keys": "xuyaofumuzhugoudenaixin",
+      "expected": "需要父母足够的耐心",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "门前的花儿开了",
+      "keys": "hudiefeilaifeiqu",
+      "expected": "蝴蝶飞来飞去",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "站在城市的高处",
+      "keys": "kangwangjiadenghuo",
+      "expected": "看万家灯火",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "商务谈判进行得很顺利",
+      "keys": "shuanfandouzuolerangbu",
+      "expected": "双方都做了让步",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "生产线出了故障",
+      "keys": "gongcengsilianyeqiangxiu",
+      "expected": "工程师连夜抢修",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "森林防火人人有责",
+      "keys": "yidianhuoxindoubuxing",
+      "expected": "一点火星都不行",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "证据链条完整",
+      "keys": "angzikeyiyisongle",
+      "expected": "案子可以移送了",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "人生地不熟",
+      "keys": "wengwenglubiandelaoren",
+      "expected": "问问路边的老人",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "城市治理的智慧",
+      "keys": "canzaixijieli",
+      "expected": "藏在细节里",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "声音识别技术",
+      "keys": "zejiniangjinbufeikuai",
+      "expected": "这几年进步飞快",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "认真的样子最帅",
+      "keys": "nigongzhuodesihouzhenhaokan",
+      "expected": "你工作的时候真好看",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "挣钱的速度",
+      "keys": "gangbusangfangjiadesudu",
+      "expected": "赶不上房价的速度",
+      "swap_ratio": 0.5
+    },
+    {
+      "context": "周末的清晨很安静",
+      "keys": "kongqiliyouyidianlianyi",
+      "expected": "空气里有一点凉意",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "朋友约我去逛超市",
+      "keys": "womengfengtoumaidongxi",
+      "expected": "我们分头买东西",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "登高望远的心情",
+      "keys": "fenjinmeideranrengpingzhuhuxi",
+      "expected": "风景美得让人屏住呼吸",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "他是个很真诚的人",
+      "keys": "suohuachonglaibuhanhu",
+      "expected": "说话从来不含糊",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "公司楼下的银行",
+      "keys": "meitianzhaosangdouyourenpaidui",
+      "expected": "每天早上都有人排队",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "这座城市的生活节奏",
+      "keys": "ranrengyouaiyouhen",
+      "expected": "让人又爱又恨",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "春天的森林里",
+      "keys": "niaojiaosengchiqibifu",
+      "expected": "鸟叫声此起彼伏",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "老人的心情很好",
+      "keys": "meitianjiangcicenpaoduanlian",
+      "expected": "每天坚持晨跑锻炼",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "声音太大听不清",
+      "keys": "qinnizongxingsuoyibian",
+      "expected": "请你重新说一遍",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "真正的朋友",
+      "keys": "buhuizhainiluoposichenmo",
+      "expected": "不会在你落魄时沉默",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "完成了今天的任务",
+      "keys": "wangsangkeyiangxinxiuxi",
+      "expected": "晚上可以安心休息",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "深圳的春天很短",
+      "keys": "yizhuangyangjiuruxiale",
+      "expected": "一转眼就入夏了",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "银杏叶黄了",
+      "keys": "mangdidousijingsede",
+      "expected": "满地都是金色的",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "生产力工具",
+      "keys": "yonghaolenensengyibangsijian",
+      "expected": "用好了能省一半时间",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "找到证据了吗",
+      "keys": "meiyouzengjujiubunenxiajielun",
+      "expected": "没有证据就不能下结论",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "支持正版软件",
+      "keys": "zhunzongkaifazhedelaodong",
+      "expected": "尊重开发者的劳动",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "挑战自己的极限",
+      "keys": "rengsengchaiyouyisi",
+      "expected": "人生才有意思",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "上传文件失败",
+      "keys": "qinjiangcawanluolianjie",
+      "expected": "请检查网络连接",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "车站出口在哪边",
+      "keys": "wojidesizhaidongbian",
+      "expected": "我记得是在东边",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "自然生长的果树",
+      "keys": "guozhiweidaogenhao",
+      "expected": "果子味道更好",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "智慧城市治理",
+      "keys": "xuyaozangqitouru",
+      "expected": "需要长期投入",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "人民银行总部",
+      "keys": "jiuzhaizetiaojieshang",
+      "expected": "就在这条街上",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "心情不好想吃火锅",
+      "keys": "yuesangpenyouyiqi",
+      "expected": "约上朋友一起",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "拼命工作不是办法",
+      "keys": "sentichaisibengqian",
+      "expected": "身体才是本钱",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "亲自体验过的人",
+      "keys": "chaiyoufayangquan",
+      "expected": "才有发言权",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "沉默是金",
+      "keys": "danggaisuohuasiyaoshuo",
+      "expected": "但该说话时要说",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "晨雾散去之后",
+      "keys": "sanxiadecengsiqinxikejian",
+      "expected": "山下的城市清晰可见",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "成功没有秘诀",
+      "keys": "ziyourifuyiridijiangchi",
+      "expected": "只有日复一日地坚持",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "孩子的成长过程",
+      "keys": "xuyaofumuzhugoudenaixing",
+      "expected": "需要父母足够的耐心",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "门前的花儿开了",
+      "keys": "hudiefeilaifeiqu",
+      "expected": "蝴蝶飞来飞去",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "站在城市的高处",
+      "keys": "kangwangjiadenghuo",
+      "expected": "看万家灯火",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "商务谈判进行得很顺利",
+      "keys": "shuanfandouzhuolerangbu",
+      "expected": "双方都做了让步",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "生产线出了故障",
+      "keys": "gongcengsiliangyeqiangxiu",
+      "expected": "工程师连夜抢修",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "森林防火人人有责",
+      "keys": "yidianhuoxindoubuxin",
+      "expected": "一点火星都不行",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "证据链条完整",
+      "keys": "angzhikeyiyisongle",
+      "expected": "案子可以移送了",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "人生地不熟",
+      "keys": "wengwenglubiangdelaoren",
+      "expected": "问问路边的老人",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "城市治理的智慧",
+      "keys": "canzhaixijieli",
+      "expected": "藏在细节里",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "声音识别技术",
+      "keys": "zejiniangjinbufeikuai",
+      "expected": "这几年进步飞快",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "认真的样子最帅",
+      "keys": "nigongzhuodesihouzenhaokan",
+      "expected": "你工作的时候真好看",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "挣钱的速度",
+      "keys": "gangbusangfanjiadesudu",
+      "expected": "赶不上房价的速度",
+      "swap_ratio": 0.75
+    },
+    {
+      "context": "周末的清晨很安静",
+      "keys": "kongqiliyouyidianlianyi",
+      "expected": "空气里有一点凉意",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "朋友约我去逛超市",
+      "keys": "womengfengtoumaidongxi",
+      "expected": "我们分头买东西",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "登高望远的心情",
+      "keys": "fenjinmeideranrengpinzuhuxi",
+      "expected": "风景美得让人屏住呼吸",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "他是个很真诚的人",
+      "keys": "suohuachonglaibuhanghu",
+      "expected": "说话从来不含糊",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "公司楼下的银行",
+      "keys": "meitianzhaosangdouyourengpaidui",
+      "expected": "每天早上都有人排队",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "这座城市的生活节奏",
+      "keys": "ranrengyouaiyouheng",
+      "expected": "让人又爱又恨",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "春天的森林里",
+      "keys": "niaojiaosengchiqibifu",
+      "expected": "鸟叫声此起彼伏",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "老人的心情很好",
+      "keys": "meitianjiangcicenpaoduanliang",
+      "expected": "每天坚持晨跑锻炼",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "声音太大听不清",
+      "keys": "qinnizongxingsuoyibiang",
+      "expected": "请你重新说一遍",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "真正的朋友",
+      "keys": "buhuizhainiluoposicenmo",
+      "expected": "不会在你落魄时沉默",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "完成了今天的任务",
+      "keys": "wangsangkeyiangxingxiuxi",
+      "expected": "晚上可以安心休息",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "深圳的春天很短",
+      "keys": "yizhuangyangjiuruxiale",
+      "expected": "一转眼就入夏了",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "银杏叶黄了",
+      "keys": "mangdidousijingshede",
+      "expected": "满地都是金色的",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "生产力工具",
+      "keys": "yonghaolenensengyibangsijiang",
+      "expected": "用好了能省一半时间",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "找到证据了吗",
+      "keys": "meiyouzengjujiubunenxiajielun",
+      "expected": "没有证据就不能下结论",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "支持正版软件",
+      "keys": "zhunzongkaifazedelaodong",
+      "expected": "尊重开发者的劳动",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "挑战自己的极限",
+      "keys": "rengsengchaiyouyishi",
+      "expected": "人生才有意思",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "上传文件失败",
+      "keys": "qinjiangcawanluoliangjie",
+      "expected": "请检查网络连接",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "车站出口在哪边",
+      "keys": "wojidesizhaidongbiang",
+      "expected": "我记得是在东边",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "自然生长的果树",
+      "keys": "guozhiweidaogenhao",
+      "expected": "果子味道更好",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "智慧城市治理",
+      "keys": "xuyaozangqitouru",
+      "expected": "需要长期投入",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "人民银行总部",
+      "keys": "jiuzhaizetiaojiesang",
+      "expected": "就在这条街上",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "心情不好想吃火锅",
+      "keys": "yuesangpenyouyiqi",
+      "expected": "约上朋友一起",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "拼命工作不是办法",
+      "keys": "sentichaisibengqiang",
+      "expected": "身体才是本钱",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "亲自体验过的人",
+      "keys": "chaiyoufayangquan",
+      "expected": "才有发言权",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "沉默是金",
+      "keys": "danggaisuohuasiyaosuo",
+      "expected": "但该说话时要说",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "晨雾散去之后",
+      "keys": "sanxiadecengsiqinxikejiang",
+      "expected": "山下的城市清晰可见",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "成功没有秘诀",
+      "keys": "ziyourifuyiridijiangci",
+      "expected": "只有日复一日地坚持",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "孩子的成长过程",
+      "keys": "xuyaofumuzhugoudenaixing",
+      "expected": "需要父母足够的耐心",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "门前的花儿开了",
+      "keys": "hudiefeilaifeiqu",
+      "expected": "蝴蝶飞来飞去",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "站在城市的高处",
+      "keys": "kangwangjiadenhuo",
+      "expected": "看万家灯火",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "商务谈判进行得很顺利",
+      "keys": "shuanfandouzhuoleranbu",
+      "expected": "双方都做了让步",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "生产线出了故障",
+      "keys": "gongcengsiliangyeqianxiu",
+      "expected": "工程师连夜抢修",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "森林防火人人有责",
+      "keys": "yidianhuoxindoubuxin",
+      "expected": "一点火星都不行",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "证据链条完整",
+      "keys": "angzhikeyiyisongle",
+      "expected": "案子可以移送了",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "人生地不熟",
+      "keys": "wengwenglubiangdelaoreng",
+      "expected": "问问路边的老人",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "城市治理的智慧",
+      "keys": "canzhaixijieli",
+      "expected": "藏在细节里",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "声音识别技术",
+      "keys": "zejiniangjingbufeikuai",
+      "expected": "这几年进步飞快",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "认真的样子最帅",
+      "keys": "nigongzhuodesihouzenhaokang",
+      "expected": "你工作的时候真好看",
+      "swap_ratio": 1.0
+    },
+    {
+      "context": "挣钱的速度",
+      "keys": "gangbusangfanjiadeshudu",
+      "expected": "赶不上房价的速度",
+      "swap_ratio": 1.0
+    }
+  ]
+}
