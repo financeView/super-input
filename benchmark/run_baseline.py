@@ -25,7 +25,11 @@ def collect_baseline(dataset_path: pathlib.Path, tool: pathlib.Path) -> dict[str
     keys = list(dict.fromkeys(item["keys"] for item in dataset["items"]))
     payload = "".join(key + "\n" for key in keys)
     result = subprocess.run(
-        [str(tool), str(ROOT / "baseline/data")],
+        [
+            str(tool),
+            str(ROOT / "third_party/install/share/rime-data"),
+            str(ROOT / "baseline/data"),
+        ],
         input=payload,
         capture_output=True,
         text=True,

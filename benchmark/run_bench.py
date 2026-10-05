@@ -85,7 +85,7 @@ def evaluate_items(
             metrics["l1_sum_first"] += 1
 
         # Upgrade only when L1 differs from the fast-path first candidate and
-        # its confidence gap is below the calibrated mean-logprob threshold.
+        # its confidence gap is below the configured mean-logprob threshold.
         if best != 0 and confidence < threshold:
             metrics["l2_triggered"] += 1
             syllables, _fragment = segment_keys(item["keys"])
@@ -124,6 +124,20 @@ def render_report(model_id: str, metrics: dict[str, Any], kv_result: bool | None
     total = metrics["total"]
     l1 = metrics["l1_latency_ms"]
     l2 = metrics["l2_latency_ms"]
+    baseline_rate = metrics["baseline_first"] / total if total else 0.0
+    l1_rate = metrics["l1_first"] / total if total else 0.0
+    recall_rate = metrics["recall20"] / total if total else 0.0
+    gain = l1_rate - baseline_rate
+    required_rate = baseline_rate + 0.15
+    if not total:
+        accuracy_gate = "NOT MEASURED"
+    elif recall_rate < required_rate:
+        accuracy_gate = f"UNREACHABLE: recall ceiling {recall_rate:.1%} < required {required_rate:.1%}"
+    else:
+        accuracy_gate = "PASS" if l1_rate >= required_rate else "FAIL"
+    l1_p95 = percentile(l1, .95)
+    latency_gate = "NOT MEASURED" if not l1 else ("PASS" if l1_p95 < 800 else "FAIL")
+    kv_gate = "NOT RUN" if kv_result is None else ("SUPPORTED" if kv_result else "UNSUPPORTED")
     report = f"""# Offline benchmark report (Plan 1 gate)
 
 - Model: `{model_id}`
@@ -131,6 +145,7 @@ def render_report(model_id: str, metrics: dict[str, Any], kv_result: bool | None
 - **Top-20 recall ceiling**: {_pct(metrics['recall20'], total)}
 - **librime baseline top-1 accuracy**: {_pct(metrics['baseline_first'], total)}
 - **L1 top-1 accuracy (mean logprob)**: {_pct(metrics['l1_first'], total)}
+- L1 gain over baseline: {gain:+.1%} (required +15.0 percentage points; recall ceiling must reach {required_rate:.1%})
 - L1 top-1 accuracy (sum logprob comparison): {_pct(metrics['l1_sum_first'], total)}
 - L1 confidence gap: p50={percentile(metrics['confidences'], .50):.3f}, p95={percentile(metrics['confidences'], .95):.3f}; threshold={CONF_THRESHOLD}
 - L2 triggered: {metrics['l2_triggered']}; T0-valid: {metrics['l2_valid']}; blocked/failed: {metrics['l2_blocked']} (T1 additional pass: {metrics['t1_extra_valid']}); valid-but-wrong: {metrics['l2_wrong_valid']}; correct: {metrics['l2_correct']}
@@ -140,9 +155,9 @@ def render_report(model_id: str, metrics: dict[str, Any], kv_result: bool | None
 
 ## Gate decisions (human review required)
 
-1. L1 gain ≥ +15 percentage points vs the same-schema librime baseline, interpreted against recall ceiling: **not yet adjudicated**
-2. L1 p95 <800ms: **not yet adjudicated**
-3. KV prefix-cache support: **{kv_result}**
+1. L1 gain ≥ +15 percentage points vs the same-schema librime baseline, interpreted against recall ceiling: **{accuracy_gate}**
+2. L1 p95 <800ms: **{latency_gate}** (p95 {l1_p95:.0f}ms)
+3. KV prefix-cache support: **{kv_gate}**
 4. L2 validation rejection and hallucination proxy: **see metrics above; human review required**
 5. Enter Plan 2 (Squirrel/macOS integration): **defer until target Mac measurements and review**
 """

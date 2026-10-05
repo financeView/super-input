@@ -60,3 +60,26 @@ def test_missing_candidates_are_counted_not_dropped():
     )
     assert metrics["total"] == 1 and metrics["recall20"] == 0
     assert metrics["details"][0]["note"] == "no-candidates"
+
+
+def _report_metrics(recall20, baseline_first, l1_first):
+    return {
+        "total": 10, "recall20": recall20, "baseline_first": baseline_first,
+        "l1_first": l1_first, "l1_sum_first": l1_first,
+        "confidences": [0.4, 0.8], "l2_triggered": 0, "l2_valid": 0,
+        "l2_blocked": 0, "t1_extra_valid": 0, "l2_wrong_valid": 0,
+        "l2_correct": 0, "l1_latency_ms": [100.0, 200.0], "l2_latency_ms": [],
+    }
+
+
+def test_report_adjudicates_accuracy_and_latency_gates():
+    report = bench.render_report("model", _report_metrics(8, 3, 5), True)
+    assert "L1 gain over baseline: +20.0%" in report
+    assert "**PASS**" in report
+    assert "**SUPPORTED**" in report
+
+
+def test_report_calls_accuracy_gate_unreachable_below_recall_ceiling():
+    report = bench.render_report("model", _report_metrics(4, 3, 4), None)
+    assert "UNREACHABLE" in report
+    assert "**NOT RUN**" in report

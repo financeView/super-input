@@ -9,6 +9,7 @@ macOS 拼音输入法的上下文重排核心与离线验证工具。目标是�
 - 设计规格：[LLM 拼音输入法设计](docs/superpowers/specs/2026-09-22-llm-pinyin-ime-design.md)
 - 实施计划：[rerank 核心与基准计划](docs/superpowers/plans/2026-09-23-rerank-core-and-benchmark.md)
 - 实现与验证记录：[implementation status](docs/superpowers/implementation-status.md)
+- librime 构建依据：[build notes](docs/superpowers/librime-build-notes.md)
 - 模糊音规则唯一来源：[`assets/superpinyin.schema.yaml`](assets/superpinyin.schema.yaml)
 
 核心能力包含有效音节表、Rime derive 模糊音关系、完整音节 DP 切分、多音字读音、T0/T1 L2 硬校验、L1 平均 logprob 排序接口、本地/云 L2 解码、鉴权 HTTP 服务、会话超时降级策略，以及 librime 基线和模型延迟基准脚本。
@@ -31,7 +32,7 @@ python3 -m venv .venv
 
 ## librime 同 schema 基线
 
-`baseline/build.sh` 会获取公开的 librime 源码和 luna_pinyin 词典，构建 `baseline/dump_candidates`。首次构建需 C/CMake 工具链和 librime 原生依赖。确认安装来源后，可在 macOS 或 Linux 上运行：
+`baseline/build.sh` 会获取公开的 librime 源码和 luna_pinyin 词典，构建 `baseline/dump_candidates`，并安装 Rime 的 `essay.txt` 词频表及 OpenCC 简体转换数据。首次构建需 C/CMake 工具链、librime 原生依赖和 OpenCC 数据文件；脚本会探测常见安装目录，也可通过 `OPENCC_DATA_DIR` 指定。确认安装来源后，可在 macOS 或 Linux 上运行：
 
 ```bash
 ./baseline/build.sh

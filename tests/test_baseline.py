@@ -15,7 +15,11 @@ def _run(keys: str) -> list[str]:
     variable = "DYLD_LIBRARY_PATH" if os.uname().sysname == "Darwin" else "LD_LIBRARY_PATH"
     env[variable] = str(library_dir) + os.pathsep + env.get(variable, "")
     result = subprocess.run(
-        [str(TOOL), str(ROOT / "baseline/data")],
+        [
+            str(TOOL),
+            str(ROOT / "third_party/install/share/rime-data"),
+            str(ROOT / "baseline/data"),
+        ],
         input=keys + "\n",
         capture_output=True,
         text=True,
@@ -36,4 +40,4 @@ def test_top_candidate_contains_expected_context():
 @pytest.mark.skipif(not TOOL.exists(), reason="librime baseline tool not built")
 def test_fuzzy_schema_is_active():
     candidates = _run("fenjinghenmei")
-    assert any("风" in candidate for candidate in candidates)
+    assert candidates and "风景很美" in candidates

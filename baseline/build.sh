@@ -31,9 +31,45 @@ mkdir -p "${LIBRIME}/build"
 cmake -S "${LIBRIME}" -B "${LIBRIME}/build" \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX="${INSTALL}" \
-  -DBUILD_TEST=OFF
+  -DBUILD_TEST=OFF \
+  -DBUILD_DATA=ON
 cmake --build "${LIBRIME}/build" --parallel "${JOBS}"
 cmake --install "${LIBRIME}/build"
+
+# `use_preset_vocabulary: true` in luna_pinyin expects the shared essay list.
+# The current upstream source keeps minimal runtime data under data/minimal.
+SHARED_DATA="${INSTALL}/share/rime-data"
+mkdir -p "${SHARED_DATA}"
+for preset in essay.txt symbols.yaml; do
+  if [[ -f "${LIBRIME}/data/minimal/${preset}" ]]; then
+    cp "${LIBRIME}/data/minimal/${preset}" "${SHARED_DATA}/${preset}"
+  fi
+done
+
+OPENCC_DATA_DIR="${OPENCC_DATA_DIR:-}"
+if [[ -z "${OPENCC_DATA_DIR}" ]]; then
+  for candidate in /usr/share/opencc /opt/homebrew/share/opencc /usr/local/share/opencc; do
+    if [[ -f "${candidate}/t2s.json" ]]; then
+      OPENCC_DATA_DIR="${candidate}"
+      break
+    fi
+  done
+fi
+if [[ -z "${OPENCC_DATA_DIR}" && "$(uname -s)" == "Darwin" ]] && command -v brew >/dev/null 2>&1; then
+  candidate="$(brew --prefix opencc 2>/dev/null)/share/opencc"
+  [[ -f "${candidate}/t2s.json" ]] && OPENCC_DATA_DIR="${candidate}"
+fi
+if [[ -z "${OPENCC_DATA_DIR}" || ! -f "${OPENCC_DATA_DIR}/t2s.json" ]]; then
+  echo "OpenCC data not found; install opencc or set OPENCC_DATA_DIR" >&2
+  exit 1
+fi
+shopt -s nullglob
+opencc_files=("${OPENCC_DATA_DIR}"/*.json "${OPENCC_DATA_DIR}"/*.ocd2)
+if (( ${#opencc_files[@]} == 0 )); then
+  echo "no OpenCC data files found in ${OPENCC_DATA_DIR}" >&2
+  exit 1
+fi
+cp "${opencc_files[@]}" "${SHARED_DATA}/"
 
 OS="$(uname -s)"
 if [[ "${OS}" == "Darwin" ]]; then
