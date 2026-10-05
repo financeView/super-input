@@ -1,1 +1,79 @@
 # super-input
+
+macOS 拼音输入法的上下文重排核心与离线验证工具。目标是保留 librime 的逐键快速路径，只在停顿后对候选进行 L1 本地似然重排；低置信度时可升级到 L2 整句解码，并由拼音校验器拦截不合规输出。
+
+> 当前仓库实现的是 **Plan 1：rerank 核心与离线基准**。Squirrel/macOS IMK 的键盘事件集成属于后续 Plan 2，尚未实现。该仓库起始状态只有文档，没有源码或测试配置。
+
+## 设计与实现范围
+
+- 设计规格：[LLM 拼音输入法设计](docs/superpowers/specs/2026-09-22-llm-pinyin-ime-design.md)
+- 实施计划：[rerank 核心与基准计划](docs/superpowers/plans/2026-09-23-rerank-core-and-benchmark.md)
+- 实现与验证记录：[implementation status](docs/superpowers/implementation-status.md)
+- 模糊音规则唯一来源：[`assets/superpinyin.schema.yaml`](assets/superpinyin.schema.yaml)
+
+核心能力包含有效音节表、Rime derive 模糊音关系、完整音节 DP 切分、多音字读音、T0/T1 L2 硬校验、L1 平均 logprob 排序接口、本地/云 L2 解码、鉴权 HTTP 服务、会话超时降级策略，以及 librime 基线和模型延迟基准脚本。
+
+## 环境与测试
+
+需要 Python 3.11+。核心测试无需下载模型：
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -e '.[dev]'
+.venv/bin/pytest -q
+```
+
+模糊音测试集已生成并纳入版本控制（200 条，40 个种子 × 5 档替换率）：
+
+```bash
+.venv/bin/python -m rerank.testgen
+```
+
+## librime 同 schema 基线
+
+`baseline/build.sh` 会获取公开的 librime 源码和 luna_pinyin 词典，构建 `baseline/dump_candidates`。首次构建需 C/CMake 工具链和 librime 原生依赖。确认安装来源后，可在 macOS 或 Linux 上运行：
+
+```bash
+./baseline/build.sh
+.venv/bin/python benchmark/run_baseline.py
+```
+
+工具输出的 `benchmark/datasets/baseline.json` 是本地生成物，不提交版本库。只有真实运行得到同一 schema 的 top-20，召回上限与首选基线才可作有效对照。
+
+## MLX 模型基准（目标环境：Apple Silicon macOS）
+
+MLX 不支持本仓库当前使用的 Linux x86_64 电脑。要在目标 Mac 完成 L1/L2、延迟曲线与 KV 缓存实测：
+
+```bash
+.venv/bin/python -m pip install -e '.[dev,ml]'
+.venv/bin/python benchmark/run_bench.py
+.venv/bin/python benchmark/latency_curve.py
+```
+
+模型首次运行会从模型仓库下载权重。模型基准必须与真实 librime 基线分开记录；未有目标硬件实测前，不应据本地 mock 结果决定进入 Plan 2。
+
+## 本地服务
+
+服务默认监听 `127.0.0.1:47625`，协议头为 `X-SuperInput-Protocol: 1`，并要求 `Authorization: Bearer <token>`。首次启动生成 0600 权限 token 文件。默认生产配置见 `~/.superinput/rerank.yaml`；BYOK 密钥从 macOS Keychain 的 `superinput-rerank` 服务项读取，不写入配置文件。
+
+在 macOS 上创建 venv、安装依赖并下载模型后，可安装 launchd 用户代理：
+
+```bash
+./deploy/install-launch-agent.sh
+./scripts/smoke.sh
+```
+
+`deploy/com.superinput.rerank.plist` 是模板；安装脚本会把仓库绝对路径写入 `~/Library/LaunchAgents`。**不要在 Linux 上运行 launchd 安装步骤**。
+
+## 目录
+
+```text
+src/rerank/       核心逻辑与 HTTP 服务
+tests/            单元、服务和可选 librime 集成测试
+assets/           Rime schema（模糊音唯一事实源）
+baseline/         librime 候选转储工具与构建脚本
+benchmark/        数据集生成产物与基准运行器
+deploy/           macOS launchd 模板与安装脚本
+scripts/          HTTP 冒烟测试
+docs/             设计规格、计划和审查记录
+```
