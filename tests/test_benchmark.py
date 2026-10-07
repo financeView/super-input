@@ -1,4 +1,6 @@
 import importlib.util
+import json
+import shutil
 from pathlib import Path
 
 from rerank.fuzzy import load_fuzzy_classes
@@ -73,13 +75,59 @@ def _report_metrics(recall20, baseline_first, l1_first):
 
 
 def test_report_adjudicates_accuracy_and_latency_gates():
-    report = bench.render_report("model", _report_metrics(8, 3, 5), True)
+    report = bench.render_report("model", _report_metrics(8, 3, 5), True, page_size=20)
     assert "L1 gain over baseline: +20.0%" in report
     assert "**PASS**" in report
     assert "**SUPPORTED**" in report
+    assert "RimeMenu page_size: **20**" in report
 
 
-def test_report_calls_accuracy_gate_unreachable_below_recall_ceiling():
+def test_report_requires_calibration_when_recall_ceiling_cannot_meet_nominal_gain():
     report = bench.render_report("model", _report_metrics(4, 3, 4), None)
-    assert "UNREACHABLE" in report
+    assert "CALIBRATION REQUIRED" in report
+    assert "recall ceiling is +10.0 pp above baseline" in report
+    assert "calibrate against the measured ceiling per spec §7" in report
+    assert "UNREACHABLE" not in report
     assert "**NOT RUN**" in report
+
+
+def test_main_propagates_baseline_page_size_to_report_and_results(tmp_path, monkeypatch):
+    monkeypatch.setattr(bench, "ROOT", tmp_path)
+    assets = tmp_path / "assets"
+    assets.mkdir()
+    shutil.copy(ROOT / "assets/superpinyin.schema.yaml", assets / "superpinyin.schema.yaml")
+    benchmark_dir = tmp_path / "benchmark"
+    benchmark_dir.mkdir()
+    datasets = benchmark_dir / "datasets"
+    datasets.mkdir()
+    dataset_path = datasets / "dataset.json"
+    dataset_path.write_text(json.dumps({"items": [
+        {"keys": "jintian", "expected": "今天", "context": "上下文"},
+    ]}), encoding="utf-8")
+    baseline_path = datasets / "baseline.json"
+    baseline_path.write_text(json.dumps({"jintian": ["今日", "今天"]}), encoding="utf-8")
+    (datasets / "baseline.metadata.json").write_text(json.dumps({"page_size": 20}), encoding="utf-8")
+
+    class Scorer:
+        def __init__(self, _model):
+            pass
+
+        def score_detail(self, _context, candidate):
+            return (1.0 if candidate == "今天" else 0.0), 1
+
+    class Decoder:
+        def __init__(self, _model):
+            pass
+
+    monkeypatch.setattr(bench, "MLXScorer", Scorer)
+    monkeypatch.setattr(bench, "LocalDecoder", Decoder)
+
+    assert bench.main([
+        "fake-model", "--dataset", str(dataset_path), "--baseline", str(baseline_path),
+        "--skip-kv-probe",
+    ]) == 0
+
+    report = (benchmark_dir / "report.md").read_text(encoding="utf-8")
+    results = json.loads((benchmark_dir / "results.json").read_text(encoding="utf-8"))
+    assert "RimeMenu page_size: **20**" in report
+    assert results["page_size"] == 20

@@ -1,0 +1,606 @@
+diff --git a/Squirrel.xcodeproj/project.pbxproj b/Squirrel.xcodeproj/project.pbxproj
+index edde586..4e3b549 100644
+--- a/Squirrel.xcodeproj/project.pbxproj
++++ b/Squirrel.xcodeproj/project.pbxproj
+@@ -85,6 +85,7 @@
+ 		B3A001022F260100009D156B /* ReservedProperty.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A001012F260100009D156B /* ReservedProperty.swift */; };
+ 		B38E9B912BE9AE1E0036ABEF /* SquirrelApplicationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B38E9B902BE9AE1E0036ABEF /* SquirrelApplicationDelegate.swift */; };
+ 		B38E9B952BEAFEFD0036ABEF /* SquirrelInputController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B38E9B942BEAFEFD0036ABEF /* SquirrelInputController.swift */; };
++		F90000000000000000000001 /* SuperInputRerankClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90000000000000000000002 /* SuperInputRerankClient.swift */; };
+ 		B39771232BECEA150093A49B /* MacOSKeyCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B39771222BECEA150093A49B /* MacOSKeyCodes.swift */; };
+ 		B39771252BED899F0093A49B /* SquirrelConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = B39771242BED899F0093A49B /* SquirrelConfig.swift */; };
+ 		B39771272BED9B250093A49B /* SquirrelTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B39771262BED9B250093A49B /* SquirrelTheme.swift */; };
+@@ -304,6 +305,7 @@
+ 		B38E9B8F2BE9AE1E0036ABEF /* Squirrel-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Squirrel-Bridging-Header.h"; path = "sources/Squirrel-Bridging-Header.h"; sourceTree = "<group>"; };
+ 		B38E9B902BE9AE1E0036ABEF /* SquirrelApplicationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SquirrelApplicationDelegate.swift; path = sources/SquirrelApplicationDelegate.swift; sourceTree = "<group>"; };
+ 		B38E9B942BEAFEFD0036ABEF /* SquirrelInputController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SquirrelInputController.swift; path = sources/SquirrelInputController.swift; sourceTree = "<group>"; };
++		F90000000000000000000002 /* SuperInputRerankClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SuperInputRerankClient.swift; path = sources/SuperInputRerankClient.swift; sourceTree = "<group>"; };
+ 		B39771222BECEA150093A49B /* MacOSKeyCodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = MacOSKeyCodes.swift; path = sources/MacOSKeyCodes.swift; sourceTree = "<group>"; };
+ 		B39771242BED899F0093A49B /* SquirrelConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SquirrelConfig.swift; path = sources/SquirrelConfig.swift; sourceTree = "<group>"; };
+ 		B39771262BED9B250093A49B /* SquirrelTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SquirrelTheme.swift; path = sources/SquirrelTheme.swift; sourceTree = "<group>"; };
+@@ -339,6 +341,7 @@
+ 			children = (
+ 				B38E9B902BE9AE1E0036ABEF /* SquirrelApplicationDelegate.swift */,
+ 				B38E9B942BEAFEFD0036ABEF /* SquirrelInputController.swift */,
++				F90000000000000000000002 /* SuperInputRerankClient.swift */,
+ 				B39771222BECEA150093A49B /* MacOSKeyCodes.swift */,
+ 				B397712C2BEEB39D0093A49B /* InputSource.swift */,
+ 				B397712E2BEECBED0093A49B /* Main.swift */,
+@@ -610,6 +613,7 @@
+ 				B39771232BECEA150093A49B /* MacOSKeyCodes.swift in Sources */,
+ 				B39771292BEDAF4A0093A49B /* SquirrelView.swift in Sources */,
+ 				B38E9B952BEAFEFD0036ABEF /* SquirrelInputController.swift in Sources */,
++				F90000000000000000000001 /* SuperInputRerankClient.swift in Sources */,
+ 				B39771252BED899F0093A49B /* SquirrelConfig.swift in Sources */,
+ 				B397712F2BEECBED0093A49B /* Main.swift in Sources */,
+ 				B397712D2BEEB39D0093A49B /* InputSource.swift in Sources */,
+diff --git a/sources/SquirrelInputController.swift b/sources/SquirrelInputController.swift
+index ed2aef2..257c425 100644
+--- a/sources/SquirrelInputController.swift
++++ b/sources/SquirrelInputController.swift
+@@ -6,6 +6,7 @@
+ //
+ 
+ import InputMethodKit
++import Foundation
+ 
+ final class SquirrelInputController: IMKInputController {
+   private static let keyRollOver = 50
+@@ -28,6 +29,43 @@ final class SquirrelInputController: IMKInputController {
+   private var chordDuration: TimeInterval = 0
+   private var currentApp: String = ""
+ 
++  private enum SuperInputCandidateAction {
++    case rime(Int)
++    case literal(String)
++  }
++
++  private struct SuperInputRequestSnapshot {
++    let requestID: Int
++    let focusGeneration: UInt64
++    let clientID: ObjectIdentifier
++    let keys: String
++    let preedit: String
++    let cursor: Int
++    let page: Int
++    let candidates: [String]
++  }
++
++  private let superInputClient = SuperInputRerankClient()
++  private var superInputSessionID = UUID().uuidString
++  private var superInputRequestID = 0
++  private var superInputFocusGeneration: UInt64 = 0
++  private var superInputClientID: ObjectIdentifier?
++  private var superInputDebounce: DispatchWorkItem?
++  private var superInputTask: URLSessionDataTask?
++  private var superInputPending: SuperInputRequestSnapshot?
++  private var superInputHistory = ""
++  private var superInputHistoryClientID: ObjectIdentifier?
++  private var superInputRawKeys = ""
++  private var superInputPreedit = ""
++  private var superInputCursor = 0
++  private var superInputPage = 0
++  private var superInputCandidates: [String] = []
++  private var superInputSelectKeys = ""
++  private var superInputLabels: [String] = []
++  private var superInputCandidateActions: [SuperInputCandidateAction] = []
++  private var superInputOrder: [Int]?
++  private var superInputL2Text: String?
++
+   // swiftlint:disable:next cyclomatic_complexity
+   override func handle(_ event: NSEvent!, client sender: Any!) -> Bool {
+     guard let event = event else { return false }
+@@ -44,9 +82,20 @@ final class SquirrelInputController: IMKInputController {
+       }
+     }
+ 
+-    self.client ?= sender as? IMKTextInput
++    if let senderClient = sender as? IMKTextInput {
++      let senderID = ObjectIdentifier(senderClient as AnyObject)
++      if superInputClientID != senderID {
++        superInputClientID = senderID
++        resetSuperInputHistory(for: senderID)
++        superInputFocusGeneration &+= 1
++        invalidateSuperInput(clearApplied: true)
++      }
++      self.client = senderClient
++    }
+     if let app = client?.bundleIdentifier(), currentApp != app {
+       currentApp = app
++      superInputHistory = ""
++      invalidateSuperInput(clearApplied: true)
+       updateAppOptions()
+     }
+ 
+@@ -98,6 +147,11 @@ final class SquirrelInputController: IMKInputController {
+         break
+       }
+ 
++      if handleSuperInputSelection(event) {
++        handled = true
++        break
++      }
++
+       let keyCode = event.keyCode
+       var keyChars = event.charactersIgnoringModifiers
+       let capitalModifiers = modifiers.isSubset(of: [.shift, .capsLock])
+@@ -110,9 +164,13 @@ final class SquirrelInputController: IMKInputController {
+                                                            shift: modifiers.contains(.shift),
+                                                            caps: modifiers.contains(.capsLock))
+         if rimeKeycode != 0 {
++          invalidateSuperInput(clearApplied: true)
+           let rimeModifiers = SquirrelKeycode.osxModifiersToRime(modifiers: modifiers)
+           handled = processKey(rimeKeycode, modifiers: rimeModifiers)
+           rimeUpdate()
++          if handled {
++            scheduleSuperInputRerank()
++          }
+         }
+       }
+ 
+@@ -124,6 +182,20 @@ final class SquirrelInputController: IMKInputController {
+   }
+ 
+   func selectCandidate(_ index: Int) -> Bool {
++    let action = index >= 0 && index < superInputCandidateActions.count
++      ? superInputCandidateActions[index]
++      : .rime(index)
++    switch action {
++    case .literal(let text):
++      commitSuperInputText(text)
++      return true
++    case .rime(let rimeIndex):
++      return selectRimeCandidate(rimeIndex)
++    }
++  }
++
++  private func selectRimeCandidate(_ index: Int) -> Bool {
++    invalidateSuperInput(clearApplied: true)
+     let success = rimeAPI.select_candidate_on_current_page(session, index)
+     if success {
+       rimeUpdate()
+@@ -134,6 +206,7 @@ final class SquirrelInputController: IMKInputController {
+   // swiftlint:disable:next identifier_name
+   func page(up: Bool) -> Bool {
+     var handled = false
++    invalidateSuperInput(clearApplied: true)
+     handled = rimeAPI.change_page(session, up)
+     if handled {
+       rimeUpdate()
+@@ -148,12 +221,14 @@ final class SquirrelInputController: IMKInputController {
+       if currentCaretPos <= 0 {
+         return false
+       }
++      invalidateSuperInput(clearApplied: true)
+       rimeAPI.set_caret_pos(session, currentCaretPos - 1)
+     } else {
+       let inputStr = String(cString: input)
+       if currentCaretPos >= inputStr.utf8.count {
+         return false
+       }
++      invalidateSuperInput(clearApplied: true)
+       rimeAPI.set_caret_pos(session, currentCaretPos + 1)
+     }
+     rimeUpdate()
+@@ -166,6 +241,13 @@ final class SquirrelInputController: IMKInputController {
+ 
+   override func activateServer(_ sender: Any!) {
+     self.client ?= sender as? IMKTextInput
++    if let client = self.client {
++      let clientID = ObjectIdentifier(client as AnyObject)
++      superInputClientID = clientID
++      resetSuperInputHistory(for: clientID)
++    }
++    superInputFocusGeneration &+= 1
++    invalidateSuperInput(clearApplied: true)
+     var keyboardLayout = NSApp.squirrelAppDelegate.config?.getString("keyboard_layout") ?? ""
+     if keyboardLayout == "last" || keyboardLayout == "" {
+       keyboardLayout = ""
+@@ -219,6 +301,8 @@ final class SquirrelInputController: IMKInputController {
+   }
+ 
+   override func deactivateServer(_ sender: Any!) {
++    superInputFocusGeneration &+= 1
++    invalidateSuperInput(clearApplied: true)
+     hidePalettes()
+     commitComposition(sender)
+     client = nil
+@@ -231,6 +315,7 @@ final class SquirrelInputController: IMKInputController {
+ 
+   override func commitComposition(_ sender: Any!) {
+     self.client ?= sender as? IMKTextInput
++    invalidateSuperInput(clearApplied: true)
+     if session != 0 {
+       if let input = rimeAPI.get_input(session) {
+         commit(string: String(cString: input))
+@@ -312,6 +397,175 @@ final class SquirrelInputController: IMKInputController {
+ 
+ private extension SquirrelInputController {
+ 
++  func invalidateSuperInput(clearApplied: Bool) {
++    superInputDebounce?.cancel()
++    superInputDebounce = nil
++    superInputTask?.cancel()
++    superInputTask = nil
++    superInputPending = nil
++    if clearApplied {
++      superInputOrder = nil
++      superInputL2Text = nil
++      superInputCandidateActions = []
++    }
++  }
++
++  func resetSuperInputHistory(for clientID: ObjectIdentifier) {
++    if superInputHistoryClientID != clientID {
++      superInputHistoryClientID = clientID
++      superInputHistory = ""
++    }
++  }
++
++  func scheduleSuperInputRerank() {
++    superInputDebounce?.cancel()
++    guard !superInputPreedit.isEmpty,
++          !superInputRawKeys.isEmpty,
++          !superInputCandidates.isEmpty,
++          client != nil else { return }
++
++    let item = DispatchWorkItem { [weak self] in
++      self?.beginSuperInputRequest()
++    }
++    superInputDebounce = item
++    let configuredMilliseconds = UserDefaults.standard.integer(forKey: "SuperInputDebounceMilliseconds")
++    let delay = configuredMilliseconds > 0 ? min(Double(configuredMilliseconds) / 1_000, 2.0) : 0.5
++    DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
++  }
++
++  func beginSuperInputRequest() {
++    guard let client,
++          let clientID = superInputClientID,
++          !superInputPreedit.isEmpty,
++          !superInputRawKeys.isEmpty,
++          superInputHistoryClientID == clientID else { return }
++    let candidates = Array(superInputCandidates.prefix(20))
++    guard !candidates.isEmpty else { return }
++
++    superInputRequestID &+= 1
++    let requestID = superInputRequestID
++    let snapshot = SuperInputRequestSnapshot(
++      requestID: requestID,
++      focusGeneration: superInputFocusGeneration,
++      clientID: clientID,
++      keys: superInputRawKeys,
++      preedit: superInputPreedit,
++      cursor: superInputCursor,
++      page: superInputPage,
++      candidates: candidates
++    )
++    superInputPending = snapshot
++    let configuredTrust = UserDefaults.standard.string(forKey: "SuperInputTrust") ?? "T0"
++    let trust = ["T0", "T1"].contains(configuredTrust) ? configuredTrust : "T0"
++    let payload = SuperInputRerankRequest(
++      sessionID: superInputSessionID,
++      requestID: requestID,
++      keys: snapshot.keys,
++      preedit: snapshot.preedit,
++      candidates: candidates,
++      context: superInputHistory,
++      trust: trust
++    )
++
++    superInputTask = superInputClient.rerank(payload) { [weak self] result in
++      DispatchQueue.main.async {
++        self?.finishSuperInputRequest(requestID: requestID, result: result)
++      }
++    }
++    if superInputTask == nil {
++      superInputPending = nil
++    }
++    _ = client
++  }
++
++  func finishSuperInputRequest(
++    requestID: Int,
++    result: Result<SuperInputRerankResponse, Error>
++  ) {
++    guard let snapshot = superInputPending, snapshot.requestID == requestID else { return }
++    guard let activeClient = client,
++          superInputFocusGeneration == snapshot.focusGeneration,
++          superInputClientID == snapshot.clientID,
++          ObjectIdentifier(activeClient as AnyObject) == snapshot.clientID,
++          superInputRawKeys == snapshot.keys,
++          superInputPreedit == snapshot.preedit,
++          superInputCursor == snapshot.cursor,
++          superInputPage == snapshot.page,
++          Array(superInputCandidates.prefix(20)) == snapshot.candidates else {
++      superInputPending = nil
++      superInputTask = nil
++      return
++    }
++    superInputPending = nil
++    superInputTask = nil
++
++    if case .success(let response) = result, response.mode == "fastpath" {
++      superInputOrder = nil
++      superInputL2Text = nil
++      return
++    }
++
++    guard case .success(let response) = result,
++          response.mode == "L1" || response.mode == "L2",
++          response.order.count == snapshot.candidates.count,
++          Set(response.order).count == snapshot.candidates.count,
++          Set(response.order) == Set(snapshot.candidates.indices),
++          response.best == response.order.first,
++          response.confidence.isFinite,
++          response.confidence >= 0 else { return }
++
++    if response.mode == "L2" {
++      guard let text = response.l2Text, !text.isEmpty else { return }
++      superInputL2Text = text
++    } else {
++      superInputL2Text = nil
++    }
++    superInputOrder = response.order
++    rimeUpdate()
++  }
++
++  func handleSuperInputSelection(_ event: NSEvent) -> Bool {
++    guard !superInputPreedit.isEmpty,
++          !superInputCandidates.isEmpty,
++          event.modifierFlags.intersection([.command, .control, .option, .shift]).isEmpty else { return false }
++
++    if [UInt16(49), UInt16(36), UInt16(76)].contains(event.keyCode) {
++      if let text = superInputL2Text {
++        commitSuperInputText(text)
++        return true
++      }
++      guard let best = superInputOrder?.first else { return false }
++      return selectRimeCandidate(best)
++    }
++
++    guard let key = event.charactersIgnoringModifiers?.first,
++          let visibleIndex = candidateSelectionIndex(for: key) else { return false }
++    if superInputL2Text != nil {
++      return selectCandidate(visibleIndex)
++    }
++    guard let order = superInputOrder, visibleIndex < order.count else { return false }
++    return selectRimeCandidate(order[visibleIndex])
++  }
++
++  func candidateSelectionIndex(for key: Character) -> Int? {
++    let index: Int?
++    if let keyPosition = superInputSelectKeys.firstIndex(of: key) {
++      index = superInputSelectKeys.distance(from: superInputSelectKeys.startIndex, to: keyPosition)
++    } else {
++      index = superInputLabels.firstIndex(of: String(key))
++    }
++    guard let index, index >= 0, index < superInputCandidateActions.count else { return nil }
++    return index
++  }
++
++  func commitSuperInputText(_ text: String) {
++    guard session != 0, !text.isEmpty else { return }
++    invalidateSuperInput(clearApplied: true)
++    rimeAPI.clear_composition(session)
++    rimeUpdate()
++    commit(string: text)
++  }
++
+   func onChordTimer(_: Timer) {
+     var processedKeys = false
+     if chordKeyCount > 0 && session != 0 {
+@@ -360,6 +614,10 @@ private extension SquirrelInputController {
+   }
+ 
+   func createSession() {
++    invalidateSuperInput(clearApplied: true)
++    superInputSessionID = UUID().uuidString
++    superInputHistory = ""
++    superInputHistoryClientID = superInputClientID
+     let app = client?.bundleIdentifier() ?? {
+       SquirrelInputController.unknownAppCnt &+= 1
+       return "UnknownApp\(SquirrelInputController.unknownAppCnt)"
+@@ -536,9 +794,11 @@ private extension SquirrelInputController {
+         comments.append(candidate.comment.map { String(cString: $0) } ?? "")
+       }
+       var labels = [String]()
++      var selectKeys = ""
+       // swiftlint:disable identifier_name
+       if let select_keys = ctx.menu.select_keys {
+-        labels = String(cString: select_keys).map { String($0) }
++        selectKeys = String(cString: select_keys)
++        labels = selectKeys.map { String($0) }
+       } else if let select_labels = ctx.select_labels {
+         let pageSize = Int(ctx.menu.page_size)
+         for i in 0..<pageSize {
+@@ -549,12 +809,38 @@ private extension SquirrelInputController {
+       let page = Int(ctx.menu.page_no)
+       let lastPage = ctx.menu.is_last_page
+ 
++      superInputRawKeys = rimeAPI.get_input(session).map { String(cString: $0) } ?? ""
++      superInputPreedit = preedit
++      superInputCursor = Int(ctx.composition.cursor_pos)
++      superInputPage = page
++      superInputCandidates = candidates
++      superInputSelectKeys = selectKeys
++      superInputLabels = labels
++
++      var displayedCandidates = candidates
++      var displayedComments = comments
++      var candidateActions = candidates.indices.map { SuperInputCandidateAction.rime($0) }
++      if let l2Text = superInputL2Text, !candidates.isEmpty {
++        let maxVisible = max(1, Int(ctx.menu.page_size))
++        let retainedIndices = Array(candidates.indices.prefix(max(0, maxVisible - 1)))
++        displayedCandidates = [l2Text] + retainedIndices.map { candidates[$0] }
++        displayedComments = ["SuperInput L2"] + retainedIndices.map { comments[$0] }
++        candidateActions = [.literal(l2Text)] + retainedIndices.map { .rime($0) }
++      }
++      superInputCandidateActions = candidateActions
++      let highlightedCandidate = superInputL2Text == nil ? Int(ctx.menu.highlighted_candidate_index) : 0
++
+       let selRange = NSRange(location: start.utf16Offset(in: preedit), length: preedit.utf16.distance(from: start, to: end))
+       showPanel(preedit: inlinePreedit ? "" : preedit, selRange: selRange, caretPos: caretPos.utf16Offset(in: preedit),
+-                candidates: candidates, comments: comments, labels: labels, highlighted: Int(ctx.menu.highlighted_candidate_index),
++                candidates: displayedCandidates, comments: displayedComments, labels: labels, highlighted: highlightedCandidate,
+                 page: page, lastPage: lastPage)
+       _ = rimeAPI.free_context(&ctx)
+     } else {
++      invalidateSuperInput(clearApplied: true)
++      superInputRawKeys = ""
++      superInputPreedit = ""
++      superInputCandidates = []
++      superInputCandidateActions = []
+       hidePalettes()
+     }
+   }
+@@ -562,6 +848,12 @@ private extension SquirrelInputController {
+   func commit(string: String) {
+     guard let client = client else { return }
+ 
++    if !string.isEmpty {
++      if let clientID = superInputClientID, superInputHistoryClientID == clientID {
++        superInputHistory = String((superInputHistory + string).suffix(200))
++      }
++    }
++
+     let forceMarkedText =
+       session != 0 &&
+       rimeAPI.get_option(session, "force_marked_text_for_direct_commit")
+diff --git a/sources/SuperInputRerankClient.swift b/sources/SuperInputRerankClient.swift
+new file mode 100644
+index 0000000..f52dd12
+--- /dev/null
++++ b/sources/SuperInputRerankClient.swift
+@@ -0,0 +0,132 @@
++import Foundation
++#if canImport(FoundationNetworking)
++import FoundationNetworking
++#endif
++#if canImport(Darwin)
++import Darwin
++#elseif canImport(Glibc)
++import Glibc
++#endif
++
++struct SuperInputRerankRequest: Encodable {
++  let sessionID: String
++  let requestID: Int
++  let keys: String
++  let preedit: String
++  let candidates: [String]
++  let context: String
++  let trust: String
++
++  enum CodingKeys: String, CodingKey {
++    case sessionID = "session_id"
++    case requestID = "request_id"
++    case keys
++    case preedit
++    case candidates
++    case context
++    case trust
++  }
++}
++
++struct SuperInputRerankResponse: Decodable {
++  let mode: String
++  let best: Int?
++  let confidence: Double
++  let order: [Int]
++  let l2Text: String?
++
++  enum CodingKeys: String, CodingKey {
++    case mode
++    case best
++    case confidence
++    case order
++    case l2Text = "l2_text"
++  }
++}
++
++/// Authenticated loopback-only client. Request text, candidates, and context are never logged.
++final class SuperInputRerankClient {
++  private let endpoint: URL
++  private let tokenURL: URL
++  private let session: URLSession
++
++  init(port: Int? = nil, tokenPath: String? = nil) {
++    let configuredPort = port ?? UserDefaults.standard.integer(forKey: "SuperInputPort")
++    let effectivePort = (1...65_535).contains(configuredPort) ? configuredPort : 47_625
++    endpoint = URL(string: "http://127.0.0.1:\(effectivePort)/rerank")!
++
++    let configuredPath = tokenPath ?? UserDefaults.standard.string(forKey: "SuperInputTokenPath")
++    let path = configuredPath ?? "~/Library/Application Support/super-input/token"
++    tokenURL = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
++
++    let configuration = URLSessionConfiguration.ephemeral
++    configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
++    configuration.timeoutIntervalForRequest = 1.5
++    configuration.timeoutIntervalForResource = 1.5
++    session = URLSession(configuration: configuration)
++  }
++
++  @discardableResult
++  func rerank(
++    _ payload: SuperInputRerankRequest,
++    completion: @escaping (Result<SuperInputRerankResponse, Error>) -> Void
++  ) -> URLSessionDataTask? {
++    guard let token = readPrivateToken() else { return nil }
++
++    var request = URLRequest(url: endpoint)
++    request.httpMethod = "POST"
++    request.timeoutInterval = 1.5
++    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
++    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
++    request.setValue("1", forHTTPHeaderField: "X-SuperInput-Protocol")
++
++    do {
++      request.httpBody = try JSONEncoder().encode(payload)
++    } catch {
++      completion(.failure(error))
++      return nil
++    }
++
++    let task = session.dataTask(with: request) { data, response, error in
++      if let error {
++        completion(.failure(error))
++        return
++      }
++      guard let http = response as? HTTPURLResponse,
++            (200..<300).contains(http.statusCode),
++            let data else {
++        completion(.failure(URLError(.badServerResponse)))
++        return
++      }
++      do {
++        completion(.success(try JSONDecoder().decode(SuperInputRerankResponse.self, from: data)))
++      } catch {
++        completion(.failure(error))
++      }
++    }
++    task.resume()
++    return task
++  }
++
++  private func readPrivateToken() -> String? {
++    let descriptor = tokenURL.path.withCString { open($0, O_RDONLY | O_NOFOLLOW) }
++    guard descriptor >= 0 else { return nil }
++    defer { _ = close(descriptor) }
++
++    var metadata = stat()
++    guard fstat(descriptor, &metadata) == 0,
++          (metadata.st_mode & mode_t(S_IFMT)) == mode_t(S_IFREG),
++          metadata.st_uid == uid_t(getuid()),
++          (metadata.st_mode & 0o077) == 0 else { return nil }
++
++    var bytes = [UInt8](repeating: 0, count: 256)
++    let count = bytes.withUnsafeMutableBytes { buffer -> Int in
++      guard let baseAddress = buffer.baseAddress else { return -1 }
++      return read(descriptor, baseAddress, buffer.count)
++    }
++    guard count > 0, count < bytes.count else { return nil }
++    let token = String(decoding: bytes.prefix(count), as: UTF8.self)
++      .trimmingCharacters(in: .whitespacesAndNewlines)
++    return token.count >= 32 ? token : nil
++  }
++}

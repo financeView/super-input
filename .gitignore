@@ -8,6 +8,7 @@ __pycache__/
 .coverage
 htmlcov/
 third_party/
+/dist/
 baseline/dump_candidates
 baseline/data/superpinyin.schema.yaml
 baseline/data/luna_pinyin.dict.yaml
@@ -16,4 +17,5 @@ baseline/data/installation.yaml
 baseline/data/user.yaml
 baseline/data/*.userdb/
 benchmark/datasets/baseline.json
+benchmark/datasets/baseline.metadata.json
 benchmark/latency.csv

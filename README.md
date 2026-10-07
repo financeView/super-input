@@ -2,7 +2,7 @@
 
 macOS 拼音输入法的上下文重排核心与离线验证工具。目标是保留 librime 的逐键快速路径，只在停顿后对候选进行 L1 本地似然重排；低置信度时可升级到 L2 整句解码，并由拼音校验器拦截不合规输出。
 
-> 当前仓库实现的是 **Plan 1：rerank 核心与离线基准**。Squirrel/macOS IMK 的键盘事件集成属于后续 Plan 2，尚未实现。该仓库起始状态只有文档，没有源码或测试配置。
+> 仓库包含 **Plan 1：rerank 核心与离线基准**，以及 **Plan 2：Squirrel/macOS IMK 源码接入**。Plan 2 的 Xcode 构建、MLX 服务和键盘实测尚未在 Apple Silicon Mac 验证；当前执行环境只有 Linux x86_64。
 
 ## 设计与实现范围
 
@@ -12,7 +12,7 @@ macOS 拼音输入法的上下文重排核心与离线验证工具。目标是�
 - librime 构建依据：[build notes](docs/superpowers/librime-build-notes.md)
 - 模糊音规则唯一来源：[`assets/superpinyin.schema.yaml`](assets/superpinyin.schema.yaml)
 
-核心能力包含有效音节表、Rime derive 模糊音关系、完整音节 DP 切分、多音字读音、T0/T1 L2 硬校验、L1 平均 logprob 排序接口、本地/云 L2 解码、鉴权 HTTP 服务、会话超时降级策略，以及 librime 基线和模型延迟基准脚本。
+核心能力包含有效音节表、Rime derive 模糊音关系、完整音节 DP 切分、多音字读音、T0/T1 L2 硬校验、L1 平均 logprob 排序接口、本地/云 L2 解码、鉴权 HTTP 服务、会话超时降级策略，以及 librime 基线和模型延迟基准脚本。Squirrel 接入保留逐键 librime 路径，仅在停顿后调用 loopback rerank；L1 只改键盘选字映射，L2 作为虚拟首选候选显示。
 
 ## 环境与测试
 
@@ -66,6 +66,10 @@ MLX 不支持本仓库当前使用的 Linux x86_64 电脑。要在目标 Mac 完
 
 `deploy/com.superinput.rerank.plist` 是模板；安装脚本会把仓库绝对路径写入 `~/Library/LaunchAgents`。**不要在 Linux 上运行 launchd 安装步骤**。
 
+## Squirrel / IMK 输入法集成
+
+macOS 构建和安装说明见 [`macos/README.md`](macos/README.md)。在 Apple Silicon Mac 上运行 `./macos/build-squirrel.sh` 构建 app，或加 `--pkg` 生成未签名的个人测试安装包。它固定 Squirrel 上游 commit 并包含 `superpinyin` schema；安装包可能替换现有 Squirrel，请先备份。源码补丁可在 Linux 用 `./macos/verify-squirrel-patch.sh` 检查；真正的 Xcode 构建、服务 warmup 和 IMK 行为必须在 Mac 实测。
+
 ## 目录
 
 ```text
@@ -75,6 +79,7 @@ assets/           Rime schema（模糊音唯一事实源）
 baseline/         librime 候选转储工具与构建脚本
 benchmark/        数据集生成产物与基准运行器
 deploy/           macOS launchd 模板与安装脚本
+macos/            Squirrel/IMK 补丁、构建入口与目标环境测试说明
 scripts/          HTTP 冒烟测试
 docs/             设计规格、计划和审查记录
 ```
